@@ -50,7 +50,7 @@ import { EMPTY_ARRAY, isExperimentEnabled } from '../common/utility';
 import { TermsConditionsType } from '../termsConditions';
 
 import CartStockPositionsChangedModal from './CartStockPositionsChangedModal';
-import { groupMethodsByPrefix } from './groupPaymentMethodsByPrefix';
+import { groupPaymentMethodsByPrefix } from './groupPaymentMethodsByPrefix';
 import mapSubmitOrderErrorMessage, { mapSubmitOrderErrorTitle } from './mapSubmitOrderErrorMessage';
 import mapToOrderRequestBody from './mapToOrderRequestBody';
 import PaymentContext from './PaymentContext';
@@ -104,7 +104,7 @@ const getDefaultPaymentMethod = ({
     );
 
     if (shouldGroupPaymentMethodsByPrefix && isExperimentEnabled(checkoutSettings, 'PAYMENTS-5142.payment_method_grouping', false)) {
-        filteredMethods = GROUPED_METHOD_ID_PREFIXES.reduce(groupMethodsByPrefix, filteredMethods);
+        filteredMethods = GROUPED_METHOD_ID_PREFIXES.reduce(groupPaymentMethodsByPrefix, filteredMethods);
     }
 
     if (consignments && consignments.length > 1) {

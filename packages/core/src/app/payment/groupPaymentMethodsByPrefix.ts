@@ -1,5 +1,9 @@
 import { type PaymentMethod } from '@bigcommerce/checkout-sdk';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 const selectAndSortPaymentMethodsByPrefix = (
     methods: PaymentMethod[],
     prefix: string,
@@ -19,6 +23,7 @@ const selectAndSortPaymentMethodsByPrefix = (
 
 const buildGroupedPaymentMethodRepresentative = (sortedGroup: PaymentMethod[]): PaymentMethod => {
     const [first] = sortedGroup;
+    const initializationData = isRecord(first.initializationData) ? first.initializationData : {};
 
     return {
         ...first,
@@ -27,13 +32,13 @@ const buildGroupedPaymentMethodRepresentative = (sortedGroup: PaymentMethod[]): 
             displayName: first.config.displayName?.replace(/^\d+x\s+/i, '') ?? first.config.displayName,
         },
         initializationData: {
-            ...(first.initializationData as Record<string, unknown>),
+            ...initializationData,
             groupedMethods: sortedGroup,
         },
     };
 };
 
-const spliceGroupedPaymentMethodRepresentativeIntoList = (
+const flatMapGroupedPaymentMethodRepresentativeIntoList = (
     methods: PaymentMethod[],
     prefix: string,
     representativeSourceId: string,
@@ -51,7 +56,7 @@ const spliceGroupedPaymentMethodRepresentativeIntoList = (
         return [];
     });
 
-export const groupMethodsByPrefix = (methods: PaymentMethod[], prefix: string): PaymentMethod[] => {
+export const groupPaymentMethodsByPrefix = (methods: PaymentMethod[], prefix: string): PaymentMethod[] => {
     const sortedGroup = selectAndSortPaymentMethodsByPrefix(methods, prefix);
 
     if (!sortedGroup) {
@@ -60,7 +65,7 @@ export const groupMethodsByPrefix = (methods: PaymentMethod[], prefix: string): 
 
     const representative = buildGroupedPaymentMethodRepresentative(sortedGroup);
 
-    return spliceGroupedPaymentMethodRepresentativeIntoList(
+    return flatMapGroupedPaymentMethodRepresentativeIntoList(
         methods,
         prefix,
         sortedGroup[0].id,
