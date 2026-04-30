@@ -1,9 +1,5 @@
 import { type PaymentMethod } from '@bigcommerce/checkout-sdk';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 const selectAndSortPaymentMethodsByPrefix = (
     methods: PaymentMethod[],
     prefix: string,
@@ -23,7 +19,9 @@ const selectAndSortPaymentMethodsByPrefix = (
 
 const buildGroupedPaymentMethodRepresentative = (sortedGroup: PaymentMethod[]): PaymentMethod => {
     const [first] = sortedGroup;
-    const initializationData = isRecord(first.initializationData) ? first.initializationData : {};
+    const initializationData = first.initializationData ? first.initializationData : {};
+
+console.log('first:', first.config.displayName, 'sortedGroup:', sortedGroup);
 
     return {
         ...first,
