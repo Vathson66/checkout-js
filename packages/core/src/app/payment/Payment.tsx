@@ -764,7 +764,7 @@ export function mapToPaymentProps({
     }
 
     const checkoutSettings = config.checkoutSettings & {
-        orderTermsAndConditionsLocation: string;
+        orderTermsAndConditionsLocation: string,
     };
 
     const {
