@@ -763,10 +763,7 @@ export function mapToPaymentProps({
         return null;
     }
 
-    const checkoutSettings = config.checkoutSettings & {
-        orderTermsAndConditionsLocation: string,
-    };
-
+    const checkoutSettings = config.checkoutSettings;
     const {
         enableTermsAndConditions: isTermsConditionsEnabled,
         features,
