@@ -21,8 +21,6 @@ const buildGroupedPaymentMethodRepresentative = (sortedGroup: PaymentMethod[]): 
     const [first] = sortedGroup;
     const initializationData = first.initializationData ? first.initializationData : {};
 
-console.log('first:', first.config.displayName, 'sortedGroup:', sortedGroup);
-
     return {
         ...first,
         config: {
