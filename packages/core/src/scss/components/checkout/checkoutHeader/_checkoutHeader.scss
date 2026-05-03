@@ -33,3 +33,22 @@
     margin-bottom: 0;
     word-wrap: break-word;
 }
+
+.catalyst-payment-only {
+    .checkoutHeader {
+        background-color: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        min-height: auto;
+    }
+
+    .checkoutHeader-content {
+        padding-bottom: spacing("single");
+        padding-top: spacing("single") + spacing("quarter");
+    }
+
+    .checkoutHeader-heading {
+        color: #0f172a;
+        font-size: remCalc(24px);
+        font-weight: fontWeight("semibold");
+    }
+}

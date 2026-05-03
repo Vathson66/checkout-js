@@ -48,6 +48,88 @@
     }
 }
 
+.catalyst-payment-only {
+    .layout {
+        max-width: remCalc(1240px);
+        padding-bottom: spacing("double") + spacing("single");
+
+        @include breakpoint("large") {
+            padding-bottom: spacing("single") + spacing("half");
+        }
+    }
+
+    .catalyst-flow-banner {
+        align-items: center;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 10px;
+        color: #1e3a8a;
+        display: flex;
+        flex-wrap: wrap;
+        gap: spacing("half");
+        margin: spacing("single") 0 spacing("single");
+        padding: spacing("half") spacing("single");
+
+        strong {
+            color: #1d4ed8;
+            font-size: fontSize("tiny");
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        span {
+            color: #334155;
+            font-size: fontSize("small");
+            line-height: 1.4;
+        }
+    }
+
+    .catalyst-checkout-footer {
+        align-items: center;
+        border-top: 1px solid #e2e8f0;
+        color: #64748b;
+        display: flex;
+        flex-wrap: wrap;
+        font-size: fontSize("tiny");
+        gap: spacing("half") spacing("single");
+        justify-content: center;
+        margin: spacing("single") auto 0;
+        max-width: remCalc(1240px);
+        padding: spacing("single") spacing("single") spacing("double");
+        text-align: center;
+
+        @include breakpoint("large") {
+            justify-content: flex-start;
+        }
+    }
+
+    .catalyst-checkout-footer-link {
+        color: #1f2937;
+        font-size: fontSize("tiny");
+        font-weight: fontWeight("semibold");
+        text-decoration: none;
+
+        &:focus,
+        &:hover {
+            color: #0f172a;
+            text-decoration: underline;
+        }
+    }
+
+    .catalyst-checkout-footer-copy {
+        color: #64748b;
+    }
+}
+
+.catalyst-payment-only-single-step {
+    .checkout-steps {
+        @include breakpoint("medium") {
+            padding-right: 0;
+        }
+    }
+}
+
 @media print {
     @page {
         margin: spacing("single") 0;

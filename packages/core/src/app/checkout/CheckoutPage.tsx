@@ -48,6 +48,7 @@ import CheckoutStepType from './CheckoutStepType';
 import type CheckoutSupport from './CheckoutSupport';
 import { BillingStep, CartSummary, CheckoutHeader, CustomerStep, PaymentStep, ShippingStep } from './components';
 import {
+    resolveCatalystCartEditUrl,
     resolveCatalystCheckoutEditUrl,
     shouldUseCatalystPaymentOnlyMode,
 } from './catalystCheckoutBridge';
@@ -72,6 +73,25 @@ function mapCheckoutStepToCatalystEditTarget(type: CheckoutStepType): string {
         default:
             return 'checkout';
     }
+}
+
+function shouldRenderCatalystSingleStepPayment(
+    steps: CheckoutStepStatus[],
+    isCatalystPaymentOnlyMode: boolean,
+): boolean {
+    if (!isCatalystPaymentOnlyMode) {
+        return false;
+    }
+
+    const paymentStep = steps.find((step) => step.type === CheckoutStepType.Payment);
+
+    if (!paymentStep) {
+        return false;
+    }
+
+    return steps
+        .filter((step) => step.type !== CheckoutStepType.Payment && step.isRequired)
+        .every((step) => step.isComplete);
 }
 
 export interface CheckoutProps {
@@ -540,6 +560,17 @@ const Checkout = ({
     handleConsignmentsUpdatedRef.current = handleConsignmentsUpdated;
     handleBeforeExitRef.current = handleBeforeExit;
 
+    const shouldUseCatalystSingleStepPayment = shouldRenderCatalystSingleStepPayment(
+        stepsRef.current,
+        isCatalystPaymentOnlyMode,
+    );
+    const visibleSteps = shouldUseCatalystSingleStepPayment
+        ? stepsRef.current.filter((step) => step.type === CheckoutStepType.Payment)
+        : stepsRef.current.filter((step) => step.isRequired);
+    const storefrontUrl = data.getConfig()?.links?.siteLink || '/';
+    const catalystCartUrl = resolveCatalystCartEditUrl() || cartUrl;
+    const checkoutHost = data.getConfig()?.storeProfile?.storeName || 'store';
+
     useEffect(() => {
         const unsubscribeFromConsignments = subscribeToConsignments(
             handleConsignmentsUpdatedRef.current,
@@ -692,6 +723,7 @@ const Checkout = ({
                 { 'is-embedded': isEmbedded() },
                 { 'themeV2': themeV2 },
                 { 'catalyst-payment-only': isCatalystPaymentOnlyMode },
+                { 'catalyst-payment-only-single-step': shouldUseCatalystSingleStepPayment },
             )}
             data-test="checkout-page-container"
             id="checkout-page-container"
@@ -701,6 +733,16 @@ const Checkout = ({
                     <EmptyCartMessage loginUrl={loginUrl} waitInterval={3000} />
                     :<>
                         <div className="layout-main">
+                            {shouldUseCatalystSingleStepPayment && (
+                                <div className="catalyst-flow-banner" data-test="catalyst-flow-banner">
+                                    <strong>Step 3 of 3</strong>
+                                    <span>
+                                        Customer, shipping, and billing details are already saved.
+                                        Complete secure payment to place your order.
+                                    </span>
+                                </div>
+                            )}
+
                             <CheckoutHeader
                                 activeStepType={state.activeStepType}
                                 buttonConfigs={state.buttonConfigs}
@@ -711,8 +753,7 @@ const Checkout = ({
                             />
 
                             <ol className="checkout-steps">
-                                {stepsRef.current
-                                    .filter((step) => step.isRequired)
+                                {visibleSteps
                                     .map((step) =>
                                         renderStep({
                                             ...step,
@@ -728,6 +769,20 @@ const Checkout = ({
                 }
                 <CartSummary isMultiShippingMode={state.isMultiShippingMode} />
             </div>
+
+            {isCatalystPaymentOnlyMode && (
+                <footer className="catalyst-checkout-footer" data-test="catalyst-checkout-footer">
+                    <a className="catalyst-checkout-footer-link" href={storefrontUrl}>
+                        Continue shopping
+                    </a>
+                    <a className="catalyst-checkout-footer-link" href={catalystCartUrl}>
+                        Edit cart
+                    </a>
+                    <span className="catalyst-checkout-footer-copy">
+                        Secure checkout for {checkoutHost}
+                    </span>
+                </footer>
+            )}
             {errorModal}
         </div>
     );
