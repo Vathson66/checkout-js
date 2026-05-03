@@ -15,51 +15,7 @@ import {
 } from '../shipping';
 
 import CheckoutStepType from './CheckoutStepType';
-
-const CATALYST_PAYMENT_ONLY_PARAM = 'catalyst_payment_only';
-const CATALYST_PAYMENT_ONLY_SESSION_KEY = 'catalyst_payment_only';
-
-function parseBooleanLike(value: string | null): boolean | null {
-    if (value === null) {
-        return null;
-    }
-
-    const normalized = value.trim().toLowerCase();
-
-    if (normalized === '1' || normalized === 'true' || normalized === 'yes') {
-        return true;
-    }
-
-    if (normalized === '0' || normalized === 'false' || normalized === 'no') {
-        return false;
-    }
-
-    return null;
-}
-
-function shouldUseCatalystPaymentOnlyMode(): boolean {
-    if (typeof window === 'undefined') {
-        return false;
-    }
-
-    try {
-        const queryValue = new URLSearchParams(window.location.search).get(CATALYST_PAYMENT_ONLY_PARAM);
-        const parsedQueryValue = parseBooleanLike(queryValue);
-
-        if (parsedQueryValue !== null) {
-            window.sessionStorage.setItem(
-                CATALYST_PAYMENT_ONLY_SESSION_KEY,
-                parsedQueryValue ? '1' : '0',
-            );
-
-            return parsedQueryValue;
-        }
-
-        return window.sessionStorage.getItem(CATALYST_PAYMENT_ONLY_SESSION_KEY) === '1';
-    } catch {
-        return false;
-    }
-}
+import { shouldUseCatalystPaymentOnlyMode } from './catalystCheckoutBridge';
 
 // StripeLink is a UX that is only available with StripeUpe and will only be displayed for BC guest users,
 // it uses its own components in the customer and shipping steps, unfortunately in order to preserve the UX
@@ -335,13 +291,10 @@ const getCheckoutStepStatuses = createSelector(
             return resolvedSteps;
         }
 
-        return [
-            {
-                ...paymentOnlyStep,
-                isActive: true,
-                isEditable: false,
-            },
-        ];
+        return resolvedSteps.map((step) => ({
+            ...step,
+            isActive: step.type === CheckoutStepType.Payment,
+        }));
     },
 );
 

@@ -10,6 +10,10 @@ import { type RedeemableProps } from './Redeemable';
 import withRedeemable from './withRedeemable';
 import { useCapabilities } from '@bigcommerce/checkout/contexts';
 import { hideEditCartLink } from '@bigcommerce/checkout/utility';
+import {
+    resolveCatalystCartEditUrl,
+    shouldUseCatalystPaymentOnlyMode,
+} from '../checkout/catalystCheckoutBridge';
 
 export type WithCheckoutCartSummaryProps = {
     checkout: Checkout;
@@ -27,11 +31,14 @@ const CartSummary: FunctionComponent<
     }
     > = ({ cartUrl, isMultiShippingMode, isBuyNowCart, ...props }) => {
     const { userJourney: { disableEditCart } } = useCapabilities();
+    const isCatalystPaymentOnlyMode = shouldUseCatalystPaymentOnlyMode();
+    const catalystCartUrl = isCatalystPaymentOnlyMode ? resolveCatalystCartEditUrl() : null;
+    const editCartUrl = catalystCartUrl || cartUrl;
 
     const headerLink = hideEditCartLink(isBuyNowCart, disableEditCart) ? null : (
         <EditLink
             isMultiShippingMode={isMultiShippingMode}
-            url={cartUrl}
+            url={editCartUrl}
         />
     );
 

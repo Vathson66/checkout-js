@@ -47,9 +47,32 @@ import type CheckoutStepStatus from './CheckoutStepStatus';
 import CheckoutStepType from './CheckoutStepType';
 import type CheckoutSupport from './CheckoutSupport';
 import { BillingStep, CartSummary, CheckoutHeader, CustomerStep, PaymentStep, ShippingStep } from './components';
+import {
+    resolveCatalystCheckoutEditUrl,
+    shouldUseCatalystPaymentOnlyMode,
+} from './catalystCheckoutBridge';
 import { mapCheckoutComponentErrorMessage } from './mapErrorMessage';
 import mapToCheckoutProps from './mapToCheckoutProps';
 import useB2BToken from './hooks/useB2BToken';
+
+function mapCheckoutStepToCatalystEditTarget(type: CheckoutStepType): string {
+    switch (type) {
+        case CheckoutStepType.Customer:
+            return 'customer';
+
+        case CheckoutStepType.Shipping:
+            return 'shipping';
+
+        case CheckoutStepType.Billing:
+            return 'billing';
+
+        case CheckoutStepType.Payment:
+            return 'payment';
+
+        default:
+            return 'checkout';
+    }
+}
 
 export interface CheckoutProps {
     checkoutId: string;
@@ -148,6 +171,7 @@ const Checkout = ({
         isSubscribed: false,
         buttonConfigs: [],
     });
+    const isCatalystPaymentOnlyMode = shouldUseCatalystPaymentOnlyMode();
 
     // Initialize refs 1/2
     const stepsRef = useRef<CheckoutStepStatus[]>(steps);
@@ -318,8 +342,24 @@ const Checkout = ({
     }, []);
 
     const handleEditStep = useCallback((type: CheckoutStepType): void => {
+        if (isCatalystPaymentOnlyMode && type !== CheckoutStepType.Payment) {
+            const target = resolveCatalystCheckoutEditUrl(
+                mapCheckoutStepToCatalystEditTarget(type),
+            );
+
+            if (target) {
+                if (window.top) {
+                    window.top.location.assign(target);
+                } else {
+                    window.location.assign(target);
+                }
+
+                return;
+            }
+        }
+
         navigateToStep(type);
-    }, [navigateToStep]);
+    }, [isCatalystPaymentOnlyMode, navigateToStep]);
 
     const handleReady = useCallback((): void => {
         navigateToNextIncompleteStep({ isDefault: true });
@@ -646,7 +686,16 @@ const Checkout = ({
     }
 
     return (
-        <div className={classNames('remove-checkout-step-numbers', { 'is-embedded': isEmbedded() }, { 'themeV2': themeV2 })} data-test="checkout-page-container" id="checkout-page-container">
+        <div
+            className={classNames(
+                'remove-checkout-step-numbers',
+                { 'is-embedded': isEmbedded() },
+                { 'themeV2': themeV2 },
+                { 'catalyst-payment-only': isCatalystPaymentOnlyMode },
+            )}
+            data-test="checkout-page-container"
+            id="checkout-page-container"
+        >
             <div className="layout optimizedCheckout-contentPrimary">
                 {state.isCartEmpty ?
                     <EmptyCartMessage loginUrl={loginUrl} waitInterval={3000} />

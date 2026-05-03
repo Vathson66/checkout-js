@@ -208,3 +208,60 @@
         margin-left: remCalc($checkoutStep-counter-size) + $checkoutStep-header-figure-margin;
     }
 }
+
+.catalyst-payment-only {
+    .checkout-step {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        padding: 16px 20px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+
+    .checkout-step:last-child {
+        border: 1px solid #e2e8f0;
+    }
+
+    .checkout-step--payment {
+        border-color: #111827;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .stepHeader {
+        align-items: flex-start;
+        padding: 0;
+    }
+
+    .stepHeader-title {
+        color: #0f172a;
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+
+    .stepHeader-body {
+        color: #475569;
+        display: block;
+        margin-top: 6px;
+        overflow: visible;
+        text-overflow: initial;
+        white-space: normal;
+        -webkit-line-clamp: unset;
+    }
+
+    .stepHeader-actions .button {
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        color: #1f2937;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 12px;
+    }
+
+    .stepHeader-actions .button:hover,
+    .stepHeader-actions .button:focus {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #0f172a;
+    }
+}
