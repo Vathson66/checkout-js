@@ -203,4 +203,28 @@ a.cart-backorder-link {
         color: #0f172a;
         text-decoration: underline;
     }
+
+    .cart-section {
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .cart-section-heading {
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    .cart-priceItem-label {
+        color: #475569;
+    }
+
+    .cart-priceItem-value {
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    .cart-priceItem--total {
+        border-top: 1px solid #e2e8f0;
+        margin-top: spacing("half");
+        padding-top: spacing("half");
+    }
 }

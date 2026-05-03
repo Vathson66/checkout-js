@@ -21,5 +21,22 @@
             font-weight: fontWeight("bold");
             margin-bottom: spacing("quarter");
         }
+
+        .catalyst-payment-only & {
+            .shipping-address-container,
+            .shipping-method {
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                padding: spacing("half") spacing("single");
+            }
+
+            .title {
+                color: #334155;
+                font-size: fontSize("tiny");
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+            }
+        }
     }
 }

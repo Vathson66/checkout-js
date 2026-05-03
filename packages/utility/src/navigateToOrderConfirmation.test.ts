@@ -64,4 +64,28 @@ describe('navigateToOrderConfirmation', () => {
             'https://catalyst.example/checkout/order-confirmation?source=hosted-checkout&orderId=456',
         );
     });
+
+    it('falls back to Catalyst checkout URL query param when return URL is missing', () => {
+        window.location.search =
+            '?catalyst_checkout_url=https%3A%2F%2Fcatalyst.example%2Fen%2Fcheckout%3Fedit%3Dpayment';
+
+        void navigateToOrderConfirmation(789);
+
+        expect(window.location.replace).toHaveBeenCalledWith(
+            'https://catalyst.example/en/checkout/order-confirmation?source=hosted-checkout&orderId=789',
+        );
+    });
+
+    it('falls back to stored Catalyst checkout URL when return URL is unavailable', () => {
+        window.sessionStorage.setItem(
+            'catalyst_checkout_url',
+            'https://catalyst.example/checkout',
+        );
+
+        void navigateToOrderConfirmation(790);
+
+        expect(window.location.replace).toHaveBeenCalledWith(
+            'https://catalyst.example/checkout/order-confirmation?source=hosted-checkout&orderId=790',
+        );
+    });
 });

@@ -19,3 +19,76 @@
 .staticConsignment-items {
     margin: spacing("quarter") 0;
 }
+
+.catalyst-payment-only {
+    .staticConsignment {
+        display: flex;
+        flex-direction: column;
+        gap: spacing("half");
+        margin-top: spacing("quarter");
+
+        @include breakpoint("small") {
+            &:not(.flex-column, .flex-row) {
+                flex-direction: row;
+            }
+        }
+    }
+
+    .shipping-address-container,
+    .shipping-method {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: spacing("half") spacing("half") spacing("half") spacing("single");
+    }
+
+    .shipping-address-container {
+        flex: 1 1 60%;
+    }
+
+    .shipping-method {
+        flex: 1 1 40%;
+    }
+
+    .title {
+        color: #334155;
+        font-size: fontSize("tiny");
+        font-weight: fontWeight("bold");
+        letter-spacing: 0.06em;
+        margin-bottom: spacing("quarter");
+        text-transform: uppercase;
+    }
+
+    .checkout-address--static .address-entry {
+        color: #0f172a;
+        line-height: 1.4;
+    }
+
+    .checkout-address--static .address-entry + .address-entry {
+        margin-top: 2px;
+    }
+
+    .shippingOption--selected {
+        border-top: 0;
+        margin-top: 0;
+        padding-top: 0;
+    }
+
+    .shippingOption-desc {
+        color: #0f172a;
+        font-size: fontSize("small");
+        font-weight: fontWeight("semibold");
+    }
+
+    .shippingOption-transitTime {
+        color: #64748b;
+        font-size: fontSize("tiny");
+        margin-top: 2px;
+    }
+
+    .shippingOption-price {
+        color: #0f172a;
+        font-size: fontSize("small");
+        font-weight: fontWeight("bold");
+    }
+}

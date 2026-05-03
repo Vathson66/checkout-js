@@ -5,3 +5,19 @@
         margin: 0;
     }
 }
+
+.catalyst-payment-only {
+    .checkout-address--static {
+        .address-entry {
+            color: #0f172a;
+            line-height: 1.4;
+        }
+
+        .address-line-2,
+        .country-name,
+        .postal-code,
+        .region {
+            color: #334155;
+        }
+    }
+}

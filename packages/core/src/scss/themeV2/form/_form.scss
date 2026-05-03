@@ -76,4 +76,21 @@
         color: $color-secondaryDarkest;
         font-size: $fontSize-tiny;
     }
+
+    .catalyst-payment-only .checkout-step--payment {
+        .form-field .floating-input,
+        .form-field .floating-select,
+        .form-field .floating-textarea {
+            background-color: $color-white;
+            border-color: #cbd5e1;
+            border-radius: remCalc(8px);
+        }
+
+        .form-field .form-label.body-medium {
+            color: #334155;
+            font-size: $fontSize-tiny;
+            font-weight: $fontWeight-semibold;
+            letter-spacing: 0.02em;
+        }
+    }
 }

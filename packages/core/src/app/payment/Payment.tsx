@@ -38,6 +38,7 @@ import { type PaymentFormValues } from '@bigcommerce/checkout/payment-integratio
 import { ChecklistSkeleton } from '@bigcommerce/checkout/ui';
 
 import { withAnalytics } from '../analytics';
+import { shouldUseCatalystPaymentOnlyMode } from '../checkout/catalystCheckoutBridge';
 import { withCheckout } from '../checkout';
 import {
     ErrorModal,
@@ -58,6 +59,7 @@ import {
     getUniquePaymentMethodId,
     PaymentMethodId,
     PaymentMethodProviderType,
+    PaymentMethodType,
 } from './paymentMethod';
 
 interface PaymentMethodSelectionParams {
@@ -65,14 +67,70 @@ interface PaymentMethodSelectionParams {
     methods: PaymentMethod[];
     consignments?: Consignment[];
     getPaymentMethod: (methodId: string, gatewayId?: string) => PaymentMethod | undefined;
+    isCatalystPaymentOnlyMode?: boolean;
+    preferredPaymentMethodId?: string;
     paymentProviderCustomer?: PaymentProviderCustomer;
+}
+
+function getPaymentMethodUniqueKey(method: PaymentMethod): string {
+    return [method.id, method.gateway || '', method.method || ''].join('::');
+}
+
+function isCreditCardMethod(method: PaymentMethod): boolean {
+    return (
+        method.method === PaymentMethodType.CreditCard ||
+        method.id === 'card' ||
+        method.id === PaymentMethodId.BigCommercePaymentsCreditCards ||
+        method.id === PaymentMethodId.PaypalCommerceCreditCards
+    );
+}
+
+function dedupePaymentMethods(
+    methods: PaymentMethod[],
+    {
+        isCatalystPaymentOnlyMode,
+        preferredPaymentMethodId,
+    }: Pick<PaymentMethodSelectionParams, 'isCatalystPaymentOnlyMode' | 'preferredPaymentMethodId'>,
+): PaymentMethod[] {
+    const uniqueMethods = methods.filter((method, index, allMethods) => {
+        const methodKey = getPaymentMethodUniqueKey(method);
+
+        return (
+            allMethods.findIndex(
+                (candidate) => getPaymentMethodUniqueKey(candidate) === methodKey,
+            ) === index
+        );
+    });
+
+    if (!isCatalystPaymentOnlyMode) {
+        return uniqueMethods;
+    }
+
+    const creditCardMethods = uniqueMethods.filter(isCreditCardMethod);
+
+    if (creditCardMethods.length <= 1) {
+        return uniqueMethods;
+    }
+
+    const preferredCreditCardMethod =
+        creditCardMethods.find(
+            (method) =>
+                method.id === preferredPaymentMethodId ||
+                method.gateway === preferredPaymentMethodId,
+        ) || creditCardMethods[0];
+
+    return uniqueMethods.filter(
+        (method) => !isCreditCardMethod(method) || method === preferredCreditCardMethod,
+    );
 }
 
 const getDefaultPaymentMethod = ({
     checkout,
     consignments,
     getPaymentMethod,
+    isCatalystPaymentOnlyMode,
     methods,
+    preferredPaymentMethodId,
     paymentProviderCustomer,
 }: PaymentMethodSelectionParams): { filteredMethods: PaymentMethod[]; defaultMethod?: PaymentMethod } => {
     let filteredMethods = methods;
@@ -119,6 +177,15 @@ const getDefaultPaymentMethod = ({
         selectedPaymentMethod = find(filteredMethods, {
             config: { hasDefaultStoredInstrument: true },
         });
+    }
+
+    filteredMethods = dedupePaymentMethods(filteredMethods, {
+        isCatalystPaymentOnlyMode,
+        preferredPaymentMethodId,
+    });
+
+    if (selectedPaymentMethod && !filteredMethods.includes(selectedPaymentMethod)) {
+        selectedPaymentMethod = filteredMethods[0];
     }
 
     return {
@@ -546,13 +613,17 @@ const Payment= (props: PaymentProps & WithCheckoutPaymentProps & WithLanguagePro
             const updatedState = await loadPaymentMethods();
             const checkout = updatedState.data.getCheckout();
             const methods = updatedState.data.getPaymentMethods() || EMPTY_ARRAY;
+                        const config = updatedState.data.getConfig();
 
             const defaultMethod = checkout
                 ? getDefaultPaymentMethod({
                       checkout,
                       consignments: updatedState.data.getConsignments(),
                       getPaymentMethod: updatedState.data.getPaymentMethod,
+                                            isCatalystPaymentOnlyMode: shouldUseCatalystPaymentOnlyMode(),
                       methods,
+                      preferredPaymentMethodId:
+                          config?.checkoutSettings.providerWithCustomCheckout ?? undefined,
                       paymentProviderCustomer: updatedState.data.getPaymentProviderCustomer(),
                   }).defaultMethod
                 : undefined;
@@ -760,7 +831,9 @@ export function mapToPaymentProps({
         checkout,
         consignments,
         getPaymentMethod,
+        isCatalystPaymentOnlyMode: shouldUseCatalystPaymentOnlyMode(),
         methods,
+        preferredPaymentMethodId: config.checkoutSettings.providerWithCustomCheckout ?? undefined,
         paymentProviderCustomer,
     });
 

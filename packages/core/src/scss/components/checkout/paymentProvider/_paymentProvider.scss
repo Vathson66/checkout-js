@@ -144,3 +144,49 @@ body.klarna-payments-fso-open {
     margin-right: remCalc(8px);
     width: remCalc(12px);
 }
+
+.catalyst-payment-only {
+    .checkout-step--payment {
+        .paymentProviderHeader-container {
+            align-items: center;
+        }
+
+        .paymentProviderHeader-name {
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .paymentProviderHeader-subtitleContainer {
+            color: #64748b;
+            font-size: fontSize("tiny");
+            margin-top: 2px;
+        }
+
+        .paymentMethod--creditCard,
+        .paymentMethod--hosted,
+        .paymentMethod--walletButton {
+            border-top: 1px solid #e2e8f0;
+            margin-top: spacing("half");
+            padding-top: spacing("half");
+        }
+
+        .paymentMethod--creditCard:first-of-type,
+        .paymentMethod--hosted:first-of-type,
+        .paymentMethod--walletButton:first-of-type {
+            border-top: 0;
+            margin-top: 0;
+            padding-top: spacing("quarter");
+        }
+
+        .form-actions {
+            margin-top: spacing("single");
+        }
+
+        .submitButtonContainer {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            min-height: remCalc(44px);
+        }
+    }
+}

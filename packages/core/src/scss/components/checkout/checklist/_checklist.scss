@@ -157,3 +157,63 @@
         box-shadow: $checklist-focus-boxShadow;
     }
 }
+
+.catalyst-payment-only {
+    .checkout-step--payment {
+        .form-legend {
+            color: #0f172a;
+            font-size: fontSize("base");
+            font-weight: fontWeight("semibold");
+            margin-bottom: spacing("half");
+        }
+
+        .form-checklist {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+        }
+
+        .form-checklist-item {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            transition: background-color 160ms ease, border-color 160ms ease;
+        }
+
+        .form-checklist-item:hover,
+        .form-checklist-item--selected {
+            background-color: #f8fafc;
+        }
+
+        .form-checklist-item--selected {
+            border-bottom-color: #cbd5e1;
+        }
+
+        .form-checklist-checkbox ~ .form-label {
+            font-size: fontSize("small");
+            font-weight: fontWeight("semibold");
+            line-height: 1.5;
+            min-height: remCalc(54px);
+            padding-bottom: spacing("half");
+            padding-top: spacing("half");
+        }
+
+        .form-checklist-checkbox ~ .form-label::before {
+            border-color: #94a3b8;
+        }
+
+        .form-checklist-checkbox:checked ~ .form-label::before,
+        .form-checklist-checkbox:checked ~ .form-label::after {
+            background-color: #0f172a;
+            border-color: #0f172a;
+        }
+
+        .form-checklist-body {
+            margin-right: spacing("single");
+            padding-bottom: spacing("quarter");
+        }
+
+        .form-checklist-container {
+            padding-top: spacing("half");
+        }
+    }
+}
