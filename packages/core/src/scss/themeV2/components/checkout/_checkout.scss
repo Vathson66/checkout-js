@@ -101,6 +101,50 @@
                 color: #1f2937;
                 font-weight: 600;
             }
+
+            .checkout-form {
+                .button--primary,
+                .button--action,
+                .optimizedCheckout-buttonPrimary {
+                    background: #111827;
+                    border-color: #111827;
+                    border-radius: 12px;
+                    color: #ffffff;
+                    font-size: fontSize("small");
+                    font-weight: fontWeight("semibold");
+                    min-height: remCalc(46px);
+                    text-transform: none;
+                }
+
+                .button--primary:hover,
+                .button--primary:focus,
+                .button--action:hover,
+                .button--action:focus,
+                .optimizedCheckout-buttonPrimary:hover,
+                .optimizedCheckout-buttonPrimary:focus {
+                    background: #0f172a;
+                    border-color: #0f172a;
+                    box-shadow: none;
+                }
+
+                .button--primary[disabled],
+                .button--action[disabled],
+                .optimizedCheckout-buttonPrimary[disabled] {
+                    background: #9ca3af;
+                    border-color: #9ca3af;
+                    color: #ffffff;
+                    opacity: 1;
+                }
+
+                .button--secondary,
+                .optimizedCheckout-buttonSecondary {
+                    border: 1px solid #cbd5e1;
+                    border-radius: 10px;
+                    color: #1f2937;
+                    font-weight: fontWeight("semibold");
+                    text-transform: none;
+                }
+            }
         }
     }
 

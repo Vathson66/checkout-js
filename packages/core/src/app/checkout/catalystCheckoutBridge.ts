@@ -1,5 +1,7 @@
 const CATALYST_PAYMENT_ONLY_PARAM = 'catalyst_payment_only';
 const CATALYST_PAYMENT_ONLY_SESSION_KEY = 'catalyst_payment_only';
+const CATALYST_RETURN_URL_PARAM = 'catalyst_return_url';
+const CATALYST_RETURN_URL_SESSION_KEY = 'catalyst_checkout_return_url';
 const CATALYST_CHECKOUT_URL_PARAM = 'catalyst_checkout_url';
 const CATALYST_CHECKOUT_URL_SESSION_KEY = 'catalyst_checkout_url';
 const CATALYST_CART_URL_PARAM = 'catalyst_cart_url';
@@ -68,12 +70,20 @@ function resolveCatalystRedirectUrl(paramName: string, sessionKey: string): URL 
     return toRedirectUrl(candidate);
 }
 
+function cacheCatalystBridgeUrls(): void {
+    readQueryValueWithSession(CATALYST_RETURN_URL_PARAM, CATALYST_RETURN_URL_SESSION_KEY);
+    readQueryValueWithSession(CATALYST_CHECKOUT_URL_PARAM, CATALYST_CHECKOUT_URL_SESSION_KEY);
+    readQueryValueWithSession(CATALYST_CART_URL_PARAM, CATALYST_CART_URL_SESSION_KEY);
+}
+
 export function shouldUseCatalystPaymentOnlyMode(): boolean {
     if (typeof window === 'undefined') {
         return false;
     }
 
     try {
+        cacheCatalystBridgeUrls();
+
         const queryValue = new URLSearchParams(window.location.search).get(CATALYST_PAYMENT_ONLY_PARAM);
         const parsedQueryValue = parseBooleanLike(queryValue);
 
