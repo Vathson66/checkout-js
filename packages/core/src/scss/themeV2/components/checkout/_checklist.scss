@@ -4,6 +4,13 @@
         display: flex;
         flex-direction: column;
 
+        .catalyst-payment-only & {
+            background: $color-white;
+            border: 1px solid #e2e8f0;
+            border-radius: remCalc(14px);
+            padding: spacing("quarter");
+        }
+
         .form-checklist-item {
             border: 1px solid $color-greyMedium;
             border-radius: spacing("sixth");
@@ -15,11 +22,22 @@
 
             &:last-child {
                 margin-bottom: 0;
-            }         
+            }
+
+            .catalyst-payment-only & {
+                border-color: #e2e8f0;
+                transition: background-color 160ms ease, border-color 160ms ease;
+            }
         }
 
         .form-checklist-item--selected {
             border: $input-border-width $input-border-style $color-black;
+
+            .catalyst-payment-only & {
+                background: #f8fafc;
+                border-color: #0f172a;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+            }
         }
 
         .form-checklist-header {
@@ -27,6 +45,10 @@
                 display: flex;
                 flex-direction: row;
                 align-items: center;
+
+                .catalyst-payment-only & {
+                    font-weight: $fontWeight-semibold;
+                }
 
                 .shippingOptionLabel {
                     width: 100%;
@@ -53,6 +75,12 @@
         &:checked ~ .form-label::before {
             border-color: $color-black;
             background-color: $color-black;
+        }
+
+        .catalyst-payment-only &:checked ~ .form-label::before,
+        .catalyst-payment-only &:checked ~ .form-label::after {
+            border-color: #0f172a;
+            background-color: #0f172a;
         }
     
         &:checked ~ .form-label::after {
