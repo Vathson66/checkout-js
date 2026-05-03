@@ -16,6 +16,51 @@ import {
 
 import CheckoutStepType from './CheckoutStepType';
 
+const CATALYST_PAYMENT_ONLY_PARAM = 'catalyst_payment_only';
+const CATALYST_PAYMENT_ONLY_SESSION_KEY = 'catalyst_payment_only';
+
+function parseBooleanLike(value: string | null): boolean | null {
+    if (value === null) {
+        return null;
+    }
+
+    const normalized = value.trim().toLowerCase();
+
+    if (normalized === '1' || normalized === 'true' || normalized === 'yes') {
+        return true;
+    }
+
+    if (normalized === '0' || normalized === 'false' || normalized === 'no') {
+        return false;
+    }
+
+    return null;
+}
+
+function shouldUseCatalystPaymentOnlyMode(): boolean {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    try {
+        const queryValue = new URLSearchParams(window.location.search).get(CATALYST_PAYMENT_ONLY_PARAM);
+        const parsedQueryValue = parseBooleanLike(queryValue);
+
+        if (parsedQueryValue !== null) {
+            window.sessionStorage.setItem(
+                CATALYST_PAYMENT_ONLY_SESSION_KEY,
+                parsedQueryValue ? '1' : '0',
+            );
+
+            return parsedQueryValue;
+        }
+
+        return window.sessionStorage.getItem(CATALYST_PAYMENT_ONLY_SESSION_KEY) === '1';
+    } catch {
+        return false;
+    }
+}
+
 // StripeLink is a UX that is only available with StripeUpe and will only be displayed for BC guest users,
 // it uses its own components in the customer and shipping steps, unfortunately in order to preserve the UX
 // when reloading the checkout page it's necessary to refill the stripe components with the information saved.
@@ -255,7 +300,7 @@ const getCheckoutStepStatuses = createSelector(
         const defaultActiveStep =
             steps.find((step) => !step.isComplete && step.isRequired) || steps[steps.length - 1];
 
-        return steps.map((step, index) => {
+        const resolvedSteps = steps.map((step, index) => {
             const isPrevStepComplete = steps
                 .slice(0, index)
                 .every((prevStep) => prevStep.isComplete || !prevStep.isRequired);
@@ -268,6 +313,35 @@ const getCheckoutStepStatuses = createSelector(
                 isEditable: isPrevStepComplete && step.isEditable && !isSubmittingOrder,
             };
         });
+
+        if (!shouldUseCatalystPaymentOnlyMode()) {
+            return resolvedSteps;
+        }
+
+        const paymentOnlyStep = resolvedSteps.find((step) => step.type === CheckoutStepType.Payment);
+
+        if (!paymentOnlyStep) {
+            return resolvedSteps;
+        }
+
+        const hasIncompleteRequiredPrePaymentStep = resolvedSteps.some(
+            (step) =>
+                step.type !== CheckoutStepType.Payment &&
+                step.isRequired &&
+                !step.isComplete,
+        );
+
+        if (hasIncompleteRequiredPrePaymentStep) {
+            return resolvedSteps;
+        }
+
+        return [
+            {
+                ...paymentOnlyStep,
+                isActive: true,
+                isEditable: false,
+            },
+        ];
     },
 );
 

@@ -2,9 +2,12 @@ import navigateToOrderConfirmation from './navigateToOrderConfirmation';
 
 describe('navigateToOrderConfirmation', () => {
     beforeEach(() => {
+        window.sessionStorage.clear();
+
         Object.defineProperty(window, 'location', {
             value: {
                 href: 'https://store.com/checkout',
+                origin: 'https://store.com',
                 pathname: '/checkout',
                 search: '',
                 replace: jest.fn(),
@@ -35,6 +38,30 @@ describe('navigateToOrderConfirmation', () => {
 
         expect(window.location.replace).toHaveBeenCalledWith(
             '/embedded-checkout/order-confirmation',
+        );
+    });
+
+    it('redirects to Catalyst return URL when the custom query param is present', () => {
+        window.location.search =
+            '?catalyst_return_url=https%3A%2F%2Fcatalyst.example%2Fcheckout%2Forder-confirmation%3Fcurrency%3DUSD';
+
+        void navigateToOrderConfirmation(123);
+
+        expect(window.location.replace).toHaveBeenCalledWith(
+            'https://catalyst.example/checkout/order-confirmation?currency=USD&source=hosted-checkout&orderId=123',
+        );
+    });
+
+    it('uses stored Catalyst return URL when query param is no longer present', () => {
+        window.sessionStorage.setItem(
+            'catalyst_checkout_return_url',
+            'https://catalyst.example/checkout/order-confirmation',
+        );
+
+        void navigateToOrderConfirmation(456);
+
+        expect(window.location.replace).toHaveBeenCalledWith(
+            'https://catalyst.example/checkout/order-confirmation?source=hosted-checkout&orderId=456',
         );
     });
 });
