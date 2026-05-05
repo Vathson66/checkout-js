@@ -17,6 +17,13 @@ import { getStoreConfig } from '../config/config.mock';
 import CustomerInfo, { type CustomerInfoProps } from './CustomerInfo';
 import { getCustomer, getGuestCustomer } from './customers.mock';
 
+const clearCatalystBridgeSession = () => {
+    window.sessionStorage.removeItem('catalyst_checkout_url');
+    window.sessionStorage.removeItem('catalyst_cart_url');
+    window.sessionStorage.removeItem('catalyst_checkout_return_url');
+    window.sessionStorage.removeItem('catalyst_payment_only');
+};
+
 describe('CustomerInfo', () => {
     let CustomerInfoTest: FunctionComponent<CustomerInfoProps>;
     let checkoutService: CheckoutService;
@@ -44,6 +51,10 @@ describe('CustomerInfo', () => {
                 </LocaleProvider>
             </CheckoutProvider>
         );
+    });
+
+    afterEach(() => {
+        clearCatalystBridgeSession();
     });
 
     describe('when customer is guest', () => {
@@ -160,6 +171,46 @@ describe('CustomerInfo', () => {
             await userEvent.click(screen.getByTestId('sign-out-link'));
 
             expect(window.location.assign).toHaveBeenCalledWith(`${expectedLogoutLink}?redirectTo=${expectedCheckoutLink}`);
+        });
+
+        it('redirects to Catalyst checkout when checkout bridge params are present', async () => {
+            const originalLocation = window.location;
+            const catalystCheckoutUrl = 'https://catalyst.store/en/checkout';
+
+            Object.defineProperty(window, 'location', {
+                writable: true,
+                configurable: true,
+                value: {
+                    // eslint-disable-next-line @typescript-eslint/no-misused-spread
+                    ...window.location,
+                    search: `?catalyst_checkout_url=${encodeURIComponent(catalystCheckoutUrl)}`,
+                    assign: jest.fn(),
+                },
+            });
+
+            try {
+                jest.spyOn(checkoutState.data, 'getConfig').mockReturnValue({
+                    ...getStoreConfig(),
+                    checkoutSettings: {
+                        ...getStoreConfig().checkoutSettings,
+                        shouldRedirectToStorefrontForAuth: true,
+                    }
+                });
+
+                const expectedLogoutLink = getStoreConfig().links.logoutLink;
+
+                render(<CustomerInfoTest />);
+
+                await userEvent.click(screen.getByTestId('sign-out-link'));
+
+                expect(window.location.assign).toHaveBeenCalledWith(`${expectedLogoutLink}?redirectTo=${catalystCheckoutUrl}`);
+            } finally {
+                Object.defineProperty(window, 'location', {
+                    value: originalLocation,
+                    configurable: true,
+                    writable: true,
+                });
+            }
         });
     });
 });

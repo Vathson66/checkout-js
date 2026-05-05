@@ -52,12 +52,41 @@ function toRedirectUrl(url: string): URL | null {
     try {
         return new URL(url);
     } catch {
+        if (typeof window === 'undefined') {
+            return null;
+        }
+
         try {
             return new URL(url, window.location.origin);
         } catch {
             return null;
         }
     }
+}
+
+function stripTrailingSlash(pathname: string): string {
+    if (pathname === '/') {
+        return '/';
+    }
+
+    return pathname.replace(/\/+$/, '') || '/';
+}
+
+function resolveStorefrontPath(pathname: string): string {
+    const normalizedPath = stripTrailingSlash(pathname);
+    const withoutCheckout = normalizedPath.replace(/\/checkout(?:\/.*)?$/, '');
+
+    if (withoutCheckout !== normalizedPath) {
+        return withoutCheckout || '/';
+    }
+
+    const withoutCart = normalizedPath.replace(/\/cart(?:\/.*)?$/, '');
+
+    if (withoutCart !== normalizedPath) {
+        return withoutCart || '/';
+    }
+
+    return '/';
 }
 
 function resolveCatalystRedirectUrl(paramName: string, sessionKey: string): URL | null {
@@ -68,6 +97,23 @@ function resolveCatalystRedirectUrl(paramName: string, sessionKey: string): URL 
     }
 
     return toRedirectUrl(candidate);
+}
+
+function resolveCatalystStorefrontTarget(): URL | null {
+    const target =
+        resolveCatalystRedirectUrl(CATALYST_CHECKOUT_URL_PARAM, CATALYST_CHECKOUT_URL_SESSION_KEY) ||
+        resolveCatalystRedirectUrl(CATALYST_CART_URL_PARAM, CATALYST_CART_URL_SESSION_KEY) ||
+        resolveCatalystRedirectUrl(CATALYST_RETURN_URL_PARAM, CATALYST_RETURN_URL_SESSION_KEY);
+
+    if (!target) {
+        return null;
+    }
+
+    target.pathname = resolveStorefrontPath(target.pathname);
+    target.search = '';
+    target.hash = '';
+
+    return target;
 }
 
 function cacheCatalystBridgeUrls(): void {
@@ -123,6 +169,15 @@ export function resolveCatalystCheckoutEditUrl(editTarget?: string): string | nu
     return target.toString();
 }
 
+export function resolveCatalystCheckoutUrl(): string | null {
+    const target = resolveCatalystRedirectUrl(
+        CATALYST_CHECKOUT_URL_PARAM,
+        CATALYST_CHECKOUT_URL_SESSION_KEY,
+    );
+
+    return target ? target.toString() : null;
+}
+
 export function resolveCatalystCartEditUrl(): string | null {
     const target = resolveCatalystRedirectUrl(CATALYST_CART_URL_PARAM, CATALYST_CART_URL_SESSION_KEY);
 
@@ -135,4 +190,30 @@ export function resolveCatalystCartEditUrl(): string | null {
     }
 
     return target.toString();
+}
+
+export function resolveCatalystStorefrontUrl(fallbackUrl = '/'): string {
+    const target = resolveCatalystStorefrontTarget();
+
+    if (target) {
+        return target.toString();
+    }
+
+    return fallbackUrl || '/';
+}
+
+export function resolveCatalystStorefrontOrigin(fallbackOrigin = ''): string {
+    const target = resolveCatalystStorefrontTarget();
+
+    if (target) {
+        return target.origin;
+    }
+
+    if (!fallbackOrigin) {
+        return '';
+    }
+
+    const fallbackTarget = toRedirectUrl(fallbackOrigin);
+
+    return fallbackTarget ? fallbackTarget.origin : fallbackOrigin;
 }

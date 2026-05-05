@@ -44,6 +44,13 @@ import { getCountries } from '../geography/countries.mock';
 
 import Checkout, { type CheckoutProps } from './Checkout';
 
+const clearCatalystBridgeSession = () => {
+    window.sessionStorage.removeItem('catalyst_checkout_url');
+    window.sessionStorage.removeItem('catalyst_cart_url');
+    window.sessionStorage.removeItem('catalyst_checkout_return_url');
+    window.sessionStorage.removeItem('catalyst_payment_only');
+};
+
 describe('Checkout', () => {
     let checkout: CheckoutPageNodeObject;
     let CheckoutTest: FunctionComponent<CheckoutProps>;
@@ -60,6 +67,7 @@ describe('Checkout', () => {
 
     afterEach(() => {
         checkout.resetHandlers();
+        clearCatalystBridgeSession();
     });
 
     afterAll(() => {
@@ -129,6 +137,42 @@ describe('Checkout', () => {
             expect(embeddedMessengerMock.postFrameLoaded).toHaveBeenCalledWith({
                 contentId: defaultProps.containerId,
             });
+        });
+
+        it('retargets checkout header home link to Catalyst storefront URL when bridge params are present', async () => {
+            const originalLocation = window.location;
+            const catalystCheckoutUrl = 'https://catalyst.store/en/checkout';
+            const headerLink = document.createElement('a');
+
+            headerLink.className = 'checkoutHeader-link';
+            headerLink.href = 'https://store.url/';
+            document.body.appendChild(headerLink);
+
+            Object.defineProperty(window, 'location', {
+                value: {
+                    // eslint-disable-next-line @typescript-eslint/no-misused-spread
+                    ...window.location,
+                    search: `?catalyst_checkout_url=${encodeURIComponent(catalystCheckoutUrl)}`,
+                },
+                configurable: true,
+                writable: true,
+            });
+
+            try {
+                render(<CheckoutTest {...defaultProps} />);
+
+                await checkout.waitForCustomerStep();
+
+                expect(headerLink.href).toBe('https://catalyst.store/en');
+                expect(headerLink.target).toBe('_top');
+            } finally {
+                headerLink.remove();
+                Object.defineProperty(window, 'location', {
+                    value: originalLocation,
+                    configurable: true,
+                    writable: true,
+                });
+            }
         });
 
         it('attaches additional styles for embedded checkout', async () => {
@@ -639,6 +683,74 @@ describe('Checkout', () => {
                 await waitFor(() => {
                     expect(window.location.replace).toHaveBeenCalledWith(
                         'https://store.url/#/invoice?receiptId=',
+                    );
+                });
+            } finally {
+                Object.defineProperty(window, 'location', {
+                    value: originalLocation,
+                    configurable: true,
+                    writable: true,
+                });
+            }
+        });
+
+        it('redirects to Catalyst storefront invoice URL when checkout bridge params are present', async () => {
+            const originalLocation = window.location;
+            const catalystCheckoutUrl = 'https://catalyst.store/en/checkout';
+
+            Object.defineProperty(window, 'location', {
+                value: {
+                    // eslint-disable-next-line @typescript-eslint/no-misused-spread
+                    ...window.location,
+                    search: `?catalyst_checkout_url=${encodeURIComponent(catalystCheckoutUrl)}`,
+                    replace: jest.fn(),
+                },
+                configurable: true,
+                writable: true,
+            });
+
+            try {
+                checkoutService = checkout.use(CheckoutPreset.CheckoutWithShippingAndBilling);
+
+                jest.spyOn(checkoutService, 'submitOrder').mockResolvedValue({
+                    data: {
+                        getOrder: () => ({ orderId: 123 } as any),
+                    },
+                } as any);
+
+                const invoiceRedirectCapabilities = {
+                    ...defaultCapabilities,
+                    orderConfirmation: {
+                        ...defaultCapabilities.orderConfirmation,
+                        invoiceRedirect: true,
+                    },
+                };
+
+                const CheckoutWithInvoiceRedirect: FunctionComponent<CheckoutProps> = (props) => (
+                    <CheckoutProvider checkoutService={checkoutService}>
+                        <LocaleProvider checkoutService={checkoutService} languageService={getLanguageService()}>
+                            <AnalyticsProviderMock>
+                                <ExtensionProvider extensionService={extensionService}>
+                                    <ThemeProvider>
+                                        <CapabilitiesContext.Provider value={invoiceRedirectCapabilities}>
+                                            <Checkout {...props} />
+                                        </CapabilitiesContext.Provider>
+                                    </ThemeProvider>
+                                </ExtensionProvider>
+                            </AnalyticsProviderMock>
+                        </LocaleProvider>
+                    </CheckoutProvider>
+                );
+
+                render(<CheckoutWithInvoiceRedirect {...defaultProps} />);
+
+                await checkout.waitForPaymentStep();
+
+                await userEvent.click(screen.getByText(/place order/i));
+
+                await waitFor(() => {
+                    expect(window.location.replace).toHaveBeenCalledWith(
+                        'https://catalyst.store/en/#/invoice?receiptId=',
                     );
                 });
             } finally {

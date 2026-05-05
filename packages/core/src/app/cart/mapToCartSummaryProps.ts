@@ -2,6 +2,7 @@ import { type CheckoutContextProps } from '@bigcommerce/checkout/contexts';
 import { isBuyNowCart } from '@bigcommerce/checkout/utility';
 
 import { isExperimentEnabled } from '../common/utility';
+import { resolveCatalystCartEditUrl } from '../checkout/catalystCheckoutBridge';
 
 import { type WithCheckoutCartSummaryProps } from './CartSummary';
 import mapToRedeemableProps from './mapToRedeemableProps';
@@ -37,7 +38,7 @@ export default function mapToCartSummaryProps(
         isShippingDiscountDisplayEnabled,
         checkout,
         shopperCurrency: config.shopperCurrency,
-        cartUrl: config.links.cartLink,
+        cartUrl: resolveCatalystCartEditUrl() || config.links.cartLink,
         storeCurrency: config.currency,
         storeCreditAmount: isStoreCreditApplied ? Math.min(grandTotal, storeCredit) : undefined,
         ...redeemableProps,

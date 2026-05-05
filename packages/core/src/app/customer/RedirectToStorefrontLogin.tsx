@@ -4,6 +4,8 @@ import { useCheckout } from '@bigcommerce/checkout/contexts';
 import { TranslatedString } from '@bigcommerce/checkout/locale';
 import { Button, ButtonVariant } from '@bigcommerce/checkout/ui';
 
+import { resolveCatalystCheckoutUrl } from '../checkout/catalystCheckoutBridge';
+
 interface RedirectToStorefrontLoginProps {
     isDisabled: boolean;
     isLoading: boolean;
@@ -24,7 +26,9 @@ export const RedirectToStorefrontLogin: React.FC<RedirectToStorefrontLoginProps>
     const { checkoutLink, loginLink } = config.links;
 
     const handleRedirect = () => {
-        return window.location.assign(`${loginLink}?redirectTo=${checkoutLink}`);
+        const redirectTo = resolveCatalystCheckoutUrl() || checkoutLink;
+
+        return window.location.assign(`${loginLink}?redirectTo=${redirectTo}`);
     }
 
     return (

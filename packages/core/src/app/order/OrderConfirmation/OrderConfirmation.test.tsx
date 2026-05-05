@@ -35,6 +35,13 @@ import { getGatewayOrderPayment, getOrder } from '../orders.mock';
 
 import { OrderConfirmation, type OrderConfirmationProps, OrderPermalinkStatus } from './OrderConfirmation';
 
+const clearCatalystBridgeSession = () => {
+    window.sessionStorage.removeItem('catalyst_checkout_url');
+    window.sessionStorage.removeItem('catalyst_cart_url');
+    window.sessionStorage.removeItem('catalyst_checkout_return_url');
+    window.sessionStorage.removeItem('catalyst_payment_only');
+};
+
 jest.mock('@bigcommerce/request-sender', () => ({
     createRequestSender: jest.fn(() => ({
         post: jest.fn(() => Promise.resolve()),
@@ -111,6 +118,10 @@ describe('OrderConfirmation', () => {
         );
     });
 
+    afterEach(() => {
+        clearCatalystBridgeSession();
+    });
+
     it('calls trackOrderComplete when config is ready', async () => {
         render(<ComponentTest {...defaultProps} />);
 
@@ -139,6 +150,42 @@ describe('OrderConfirmation', () => {
         expect(embeddedMessengerMock.postFrameLoaded).toHaveBeenCalledWith({
             contentId: defaultProps.containerId,
         });
+    });
+
+    it('retargets checkout header home link to Catalyst storefront URL when bridge params are present', async () => {
+        const originalLocation = window.location;
+        const catalystCheckoutUrl = 'https://catalyst.store/en/checkout';
+        const headerLink = document.createElement('a');
+
+        headerLink.className = 'checkoutHeader-link';
+        headerLink.href = 'https://store.url/';
+        document.body.appendChild(headerLink);
+
+        Object.defineProperty(window, 'location', {
+            writable: true,
+            configurable: true,
+            value: {
+                // eslint-disable-next-line @typescript-eslint/no-misused-spread
+                ...window.location,
+                search: `?catalyst_checkout_url=${encodeURIComponent(catalystCheckoutUrl)}`,
+            },
+        });
+
+        try {
+            render(<ComponentTest {...defaultProps} />);
+
+            await waitFor(() => {
+                expect(headerLink.href).toBe('https://catalyst.store/en');
+            });
+            expect(headerLink.target).toBe('_top');
+        } finally {
+            headerLink.remove();
+            Object.defineProperty(window, 'location', {
+                value: originalLocation,
+                configurable: true,
+                writable: true,
+            });
+        }
     });
 
     it('attaches additional styles for embedded checkout', async () => {
@@ -227,6 +274,39 @@ describe('OrderConfirmation', () => {
         expect(continueButtonContainer.querySelector('form')).toHaveAttribute(
             'action', getStoreConfig().links.siteLink,
         );
+    });
+
+    it('uses Catalyst storefront URL for continue shopping when checkout bridge params are present', async () => {
+        const originalLocation = window.location;
+        const catalystCheckoutUrl = 'https://catalyst.store/en/checkout';
+
+        Object.defineProperty(window, 'location', {
+            writable: true,
+            configurable: true,
+            value: {
+                // eslint-disable-next-line @typescript-eslint/no-misused-spread
+                ...window.location,
+                search: `?catalyst_checkout_url=${encodeURIComponent(catalystCheckoutUrl)}`,
+            },
+        });
+
+        try {
+            const { container } = render(<ComponentTest {...defaultProps} />);
+
+            // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
+            const continueButtonContainer = container.getElementsByClassName('continueButtonContainer')[0];
+
+            // eslint-disable-next-line testing-library/no-node-access
+            expect(continueButtonContainer.querySelector('form')).toHaveAttribute(
+                'action', 'https://catalyst.store/en',
+            );
+        } finally {
+            Object.defineProperty(window, 'location', {
+                value: originalLocation,
+                configurable: true,
+                writable: true,
+            });
+        }
     });
 
     describe('when permalinkStatus is expired', () => {

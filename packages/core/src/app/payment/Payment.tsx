@@ -38,7 +38,10 @@ import { type PaymentFormValues } from '@bigcommerce/checkout/payment-integratio
 import { ChecklistSkeleton } from '@bigcommerce/checkout/ui';
 
 import { withAnalytics } from '../analytics';
-import { shouldUseCatalystPaymentOnlyMode } from '../checkout/catalystCheckoutBridge';
+import {
+    resolveCatalystCartEditUrl,
+    shouldUseCatalystPaymentOnlyMode,
+} from '../checkout/catalystCheckoutBridge';
 import { withCheckout } from '../checkout';
 import {
     ErrorModal,
@@ -842,7 +845,7 @@ export function mapToPaymentProps({
         availableStoreCredit: customer.storeCredit,
         cart: getCart(),
         consignments,
-        cartUrl: config.links.cartLink,
+        cartUrl: resolveCatalystCartEditUrl() || config.links.cartLink,
         clearError: checkoutService.clearError,
         defaultMethod,
         finalizeOrderError: getFinalizeOrderError(),

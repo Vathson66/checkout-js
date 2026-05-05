@@ -8,6 +8,7 @@ import { TranslatedString, withLanguage, type WithLanguageProps } from '@bigcomm
 import { PayPalFastlaneWatermark } from '@bigcommerce/checkout/paypal-fastlane-integration';
 import { Button, ButtonVariant } from '@bigcommerce/checkout/ui';
 
+import { resolveCatalystCheckoutUrl } from '../checkout/catalystCheckoutBridge';
 import { getPrivacyPolicyValidationSchema, PrivacyPolicyField } from '../privacyPolicy';
 import { BasicFormField, Fieldset, Form, Legend } from '../ui/form';
 
@@ -97,7 +98,9 @@ const GuestForm: FunctionComponent<
 
     const handleLogin: () => void = () => {
         if (shouldRedirectToStorefrontForAuth) {
-            window.location.assign(`${loginLink}?redirectTo=${checkoutLink}`);
+            const redirectTo = resolveCatalystCheckoutUrl() || checkoutLink;
+
+            window.location.assign(`${loginLink}?redirectTo=${redirectTo}`);
 
             return;
         }

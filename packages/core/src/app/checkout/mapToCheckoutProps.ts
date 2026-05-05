@@ -6,6 +6,7 @@ import { type CheckoutContextProps } from '@bigcommerce/checkout/contexts';
 import { EMPTY_ARRAY, isExperimentEnabled } from '../common/utility';
 
 import { type WithCheckoutProps } from './Checkout';
+import { resolveCatalystCartEditUrl } from './catalystCheckoutBridge';
 import getCheckoutStepStatuses from './getCheckoutStepStatuses';
 
 export default function mapToCheckoutProps({
@@ -26,10 +27,11 @@ export default function mapToCheckoutProps({
         links: {
             loginLink: loginUrl = '',
             createAccountLink: createAccountUrl = '',
-            cartLink: cartUrl = '',
+            cartLink = '',
         } = {},
         displaySettings: { hidePriceFromGuests: isPriceHiddenFromGuests = false } = {},
     } = data.getConfig() || {};
+    const cartUrl = resolveCatalystCartEditUrl() || cartLink;
 
     const subscribeToConsignmentsSelector = createSelector(
         ({ checkoutService: { subscribe } }: CheckoutContextProps) => subscribe,

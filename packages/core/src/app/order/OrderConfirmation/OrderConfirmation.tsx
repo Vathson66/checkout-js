@@ -12,6 +12,10 @@ import { OrderConfirmationPageSkeleton } from '@bigcommerce/checkout/ui';
 import { isExperimentEnabled } from '../../common/utility';
 import { type EmbeddedCheckoutStylesheet } from '../../embeddedCheckout';
 import {
+    resolveCatalystStorefrontOrigin,
+    resolveCatalystStorefrontUrl,
+} from '../../checkout/catalystCheckoutBridge';
+import {
     type CreatedCustomer,
     type SignUpFormValues,
 } from '../../guestSignup';
@@ -129,7 +133,14 @@ export const OrderConfirmation = ({
         loadOrder(orderId)
             .then(({ data }) => {
                 const { links: { siteLink = '' } = {} } = data.getConfig() || {};
-                const messenger = createEmbeddedMessenger({ parentOrigin: siteLink });
+                const headerHomeUrl = resolveCatalystStorefrontUrl(siteLink);
+                const parentOrigin = resolveCatalystStorefrontOrigin(siteLink) || siteLink;
+                const messenger = createEmbeddedMessenger({ parentOrigin });
+
+                document.querySelectorAll<HTMLAnchorElement>('a.checkoutHeader-link').forEach((link) => {
+                    link.href = headerHomeUrl;
+                    link.target = '_top';
+                });
 
                 embeddedMessengerRef.current = messenger;
                 messenger.receiveStyles((styles) => embeddedStylesheet.append(styles));
@@ -160,6 +171,7 @@ export const OrderConfirmation = ({
         storeProfile: { orderEmail, storePhoneNumber },
         links: { siteLink },
     } = config;
+    const storefrontUrl = resolveCatalystStorefrontUrl(siteLink);
     const shouldShowPasswordForm = order.customerCanBeCreated;
     const customerCanBeCreated = !order.customerId;
     const isShippingDiscountDisplayEnabled = isExperimentEnabled(
@@ -182,7 +194,7 @@ export const OrderConfirmation = ({
             shopperConfig={shopperConfig}
             shopperCurrency={shopperCurrency}
             shouldShowPasswordForm={shouldShowPasswordForm}
-            siteLink={siteLink}
+            siteLink={storefrontUrl}
             supportEmail={orderEmail}
             supportPhoneNumber={storePhoneNumber}
         />

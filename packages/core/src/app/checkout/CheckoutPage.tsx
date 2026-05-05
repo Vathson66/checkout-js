@@ -50,6 +50,8 @@ import { BillingStep, CartSummary, CheckoutHeader, CustomerStep, PaymentStep, Sh
 import {
     resolveCatalystCartEditUrl,
     resolveCatalystCheckoutEditUrl,
+    resolveCatalystStorefrontOrigin,
+    resolveCatalystStorefrontUrl,
     shouldUseCatalystPaymentOnlyMode,
 } from './catalystCheckoutBridge';
 import { mapCheckoutComponentErrorMessage } from './mapErrorMessage';
@@ -271,9 +273,10 @@ const Checkout = ({
 
         if (invoiceRedirect && orderId !== undefined) {
             const { links: { siteLink = '' } = {} } = data.getConfig() || {};
+            const storefrontUrl = resolveCatalystStorefrontUrl(siteLink).replace(/\/$/, '');
 
             // TODO: CHECKOUT-9813 Get receiptId via B2B v1 API, more details in CHECKOUT-9813
-            window.location.replace(`${siteLink}/#/invoice?receiptId=`);
+            window.location.replace(`${storefrontUrl}/#/invoice?receiptId=`);
 
             return;
         }
@@ -567,7 +570,7 @@ const Checkout = ({
     const visibleSteps = shouldUseCatalystSingleStepPayment
         ? stepsRef.current.filter((step) => step.type === CheckoutStepType.Payment)
         : stepsRef.current.filter((step) => step.isRequired);
-    const storefrontUrl = data.getConfig()?.links?.siteLink || '/';
+    const storefrontUrl = resolveCatalystStorefrontUrl(data.getConfig()?.links?.siteLink || '/');
     const catalystCartUrl = resolveCatalystCartEditUrl() || cartUrl;
     const checkoutHost = data.getConfig()?.storeProfile?.storeName || 'store';
 
@@ -609,7 +612,14 @@ const Checkout = ({
                 }
 
                 const { links: { siteLink = '' } = {} } = data.getConfig() || {};
-                const messenger = createEmbeddedMessenger({ parentOrigin: siteLink });
+                const parentOrigin = resolveCatalystStorefrontOrigin(siteLink) || siteLink;
+                const headerHomeUrl = resolveCatalystStorefrontUrl(siteLink);
+                const messenger = createEmbeddedMessenger({ parentOrigin });
+
+                document.querySelectorAll<HTMLAnchorElement>('a.checkoutHeader-link').forEach((link) => {
+                    link.href = headerHomeUrl;
+                    link.target = '_top';
+                });
 
                 messenger.receiveStyles((styles) => embeddedStylesheet.append(styles));
                 messenger.postFrameLoaded({ contentId: containerId });

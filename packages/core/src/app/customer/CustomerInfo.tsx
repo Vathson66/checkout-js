@@ -6,6 +6,7 @@ import { type CheckoutContextProps } from '@bigcommerce/checkout/contexts';
 import { TranslatedString } from '@bigcommerce/checkout/locale';
 import { Button, ButtonSize, ButtonVariant } from '@bigcommerce/checkout/ui';
 
+import { resolveCatalystCheckoutUrl } from '../checkout/catalystCheckoutBridge';
 import { withCheckout } from '../checkout';
 import { isErrorWithType } from '../common/error';
 
@@ -46,7 +47,9 @@ const CustomerInfo: FunctionComponent<CustomerInfoProps & WithCheckoutCustomerIn
     const handleSignOut: () => Promise<void> = async () => {
         try {
             if (shouldRedirectToStorefrontForAuth) {
-                window.location.assign(`${logoutLink}?redirectTo=${checkoutLink}`);
+                const redirectTo = resolveCatalystCheckoutUrl() || checkoutLink;
+
+                window.location.assign(`${logoutLink}?redirectTo=${redirectTo}`);
 
                 return;
             }
