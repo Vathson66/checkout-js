@@ -789,35 +789,67 @@ const Checkout = ({
             return;
         }
 
-        const hideFloatingStripeBranding = (root: ParentNode = document) => {
-            root.querySelectorAll<HTMLElement | HTMLIFrameElement>('iframe, div, a, span').forEach((node) => {
-                if (!(node instanceof HTMLElement)) {
-                    return;
-                }
+        const getStripeFloatingContainer = (element: Element): HTMLElement | null => {
+            let current: HTMLElement | null = element instanceof HTMLElement ? element : element.parentElement;
 
-                const style = window.getComputedStyle(node);
-                const rect = node.getBoundingClientRect();
-                const text = (node.textContent || '').trim().toLowerCase();
-                const className = `${node.className || ''}`.toLowerCase();
-                const id = (node.id || '').toLowerCase();
-                const isFixed = style.position === 'fixed';
+            while (current && current !== document.body) {
+                const style = window.getComputedStyle(current);
+                const rect = current.getBoundingClientRect();
+                const isPinned =
+                    style.position === 'fixed' ||
+                    style.position === 'sticky' ||
+                    (style.position === 'absolute' &&
+                        rect.bottom >= window.innerHeight - 24 &&
+                        rect.right >= window.innerWidth - 24);
                 const isNearBottomRight =
                     rect.width > 0 &&
                     rect.height > 0 &&
                     rect.bottom >= window.innerHeight - 24 &&
                     rect.right >= window.innerWidth - 24;
-                const isStripeIframe =
-                    node instanceof HTMLIFrameElement &&
-                    ((node.src || '').includes('stripe') || (node.name || '').includes('stripe'));
-                const isStripeBranding =
+                const isOverlaySized = rect.width <= 280 && rect.height <= 140;
+
+                if (isPinned && isNearBottomRight && isOverlaySized) {
+                    return current;
+                }
+
+                current = current.parentElement;
+            }
+
+            return null;
+        };
+
+        const hideFloatingStripeBranding = (root: ParentNode = document) => {
+            root.querySelectorAll<HTMLElement>('iframe, div, a, span, button').forEach((node) => {
+                if (!(node instanceof Element)) {
+                    return;
+                }
+
+                const text = (node.textContent || '').trim().toLowerCase();
+                const hasStripeHint =
                     text === 'stripe >' ||
                     text === 'stripe>' ||
                     text.includes('powered by stripe') ||
-                    className.includes('stripe') ||
-                    id.includes('stripe');
+                    `${node.className || ''}`.toLowerCase().includes('stripe') ||
+                    (node.id || '').toLowerCase().includes('stripe') ||
+                    (node.getAttribute('title') || '').toLowerCase().includes('stripe') ||
+                    (node.getAttribute('aria-label') || '').toLowerCase().includes('stripe') ||
+                    (node instanceof HTMLIFrameElement &&
+                        (((node.src || '').toLowerCase().includes('stripe')) ||
+                            ((node.name || '').toLowerCase().includes('stripe')))) ||
+                    Boolean(
+                        node.querySelector(
+                            'iframe[src*="stripe"], iframe[name*="stripe"], [id*="stripe" i], [class*="stripe" i], [title*="stripe" i], [aria-label*="stripe" i]',
+                        ),
+                    );
 
-                if (isFixed && isNearBottomRight && (isStripeIframe || isStripeBranding)) {
-                    node.style.display = 'none';
+                if (!hasStripeHint) {
+                    return;
+                }
+
+                const container = getStripeFloatingContainer(node);
+
+                if (container) {
+                    container.style.display = 'none';
                 }
             });
         };
