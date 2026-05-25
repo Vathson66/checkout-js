@@ -363,7 +363,12 @@ const PaymentMethodTitle: FunctionComponent<
         return node ? <div className="paymentProviderHeader-subtitleContainer">
             {node}
         </div> : null
-    }
+    };
+
+    const shouldShowSupportedCards =
+        method.supportedCards.length > 0 &&
+        !method.id.includes('googlepay') &&
+        method.id !== 'applepay';
 
     return (
         <div className={
@@ -383,7 +388,7 @@ const PaymentMethodTitle: FunctionComponent<
                             'paymentProviderHeader-img',
                             { 'paymentProviderHeader-img-applePay': method.id === 'applepay' },
                             { 'paymentProviderHeader-img-googlePay': method.id.includes('googlepay') },
-                        )}
+                )}
                         data-test="payment-method-logo"
                         src={logoUrl}
                     />
@@ -397,12 +402,14 @@ const PaymentMethodTitle: FunctionComponent<
                 )}
                 {getSubtitle()}
             </div>
-            <div className="paymentProviderHeader-cc">
-                <CreditCardIconList
-                    cardTypes={compact(method.supportedCards.map(mapFromPaymentMethodCardType))}
-                    selectedCardType={getSelectedCardType()}
-                />
-            </div>
+            {shouldShowSupportedCards && (
+                <div className="paymentProviderHeader-cc">
+                    <CreditCardIconList
+                        cardTypes={compact(method.supportedCards.map(mapFromPaymentMethodCardType))}
+                        selectedCardType={getSelectedCardType()}
+                    />
+                </div>
+            )}
         </div>
     );
 };

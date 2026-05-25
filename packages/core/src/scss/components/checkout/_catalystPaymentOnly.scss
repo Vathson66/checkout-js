@@ -16,7 +16,7 @@
         gap: spacing("single");
         justify-content: space-between;
         margin: 0 auto;
-        max-width: remCalc(980px);
+        max-width: remCalc(1180px);
         min-height: remCalc(72px);
         padding: 0 spacing("single");
     }
@@ -58,7 +58,7 @@
 
     .checkoutHeader-content {
         margin: 0 auto;
-        max-width: remCalc(980px);
+        max-width: remCalc(1180px);
         padding: 0 spacing("single");
     }
 
@@ -72,7 +72,7 @@
         display: grid;
         gap: spacing("single");
         margin: 0 auto;
-        max-width: remCalc(980px);
+        max-width: remCalc(1180px);
         padding: spacing("half") spacing("single") spacing("double");
         width: 100%;
     }
@@ -124,10 +124,13 @@
         align-items: center;
         border: 1px solid currentColor;
         border-radius: 50%;
-        content: "";
+        content: attr(data-step);
         display: inline-flex;
         height: remCalc(14px);
+        font-size: remCalc(9px);
+        font-weight: fontWeight("bold");
         justify-content: center;
+        line-height: 1;
         width: remCalc(14px);
     }
 
@@ -139,7 +142,8 @@
     .catalyst-payment-progress-step.is-complete::before {
         background: #16a34a;
         border-color: #16a34a;
-        box-shadow: inset 0 0 0 remCalc(3px) #ffffff;
+        color: #ffffff;
+        content: "✓";
     }
 
     .catalyst-payment-progress-step.is-current {
@@ -359,12 +363,13 @@
         font-weight: fontWeight("semibold");
         line-height: 1.35;
         min-height: remCalc(52px);
-        padding: spacing("half") spacing("single") spacing("half") remCalc(44px);
+        padding: spacing("half") spacing("single") spacing("half") remCalc(52px);
+        position: relative;
     }
 
     .checkout-step--payment .form-checklist-checkbox ~ .form-label::before,
     .checkout-step--payment .form-checklist-checkbox ~ .form-label::after {
-        left: spacing("single");
+        left: remCalc(18px);
         top: 50%;
         transform: translateY(-50%);
     }
@@ -399,8 +404,44 @@
         padding-right: 0;
     }
 
+    .checkout-step--payment .paymentProviderHeader-container {
+        align-items: center;
+        display: grid;
+        gap: spacing("half");
+        grid-template-columns: minmax(0, 1fr) auto;
+        width: 100%;
+    }
+
+    .checkout-step--payment .paymentProviderHeader-nameContainer {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: spacing("quarter");
+        min-width: 0;
+    }
+
+    .checkout-step--payment .paymentProviderHeader-name {
+        align-items: center;
+        line-height: 1.2;
+        min-width: 0;
+    }
+
+    .checkout-step--payment .paymentProviderHeader-img {
+        flex: 0 0 auto;
+    }
+
+    .checkout-step--payment .paymentProviderHeader-cc {
+        align-items: center;
+        display: flex;
+        gap: spacing("quarter");
+    }
+
     .checkout-step--payment .paymentProviderHeader-container-googlePay .paymentProviderHeader-cc {
         display: none;
+    }
+
+    .checkout-step--payment .paymentProviderHeader-container-googlePay .paymentProviderHeader-nameContainer {
+        flex-wrap: nowrap;
     }
 
     .checkout-step--payment .form-field .floating-input,

@@ -122,6 +122,7 @@ interface CatalystPaymentReviewProps {
     billingAddress?: Address;
     contactEmail?: string;
     consignments?: Consignment[];
+    steps: CheckoutStepStatus[];
 }
 
 interface CatalystHostedHeaderProps {
@@ -157,7 +158,20 @@ const CatalystPaymentReview = ({
     billingAddress,
     contactEmail,
     consignments,
+    steps,
 }: CatalystPaymentReviewProps): ReactElement => {
+    const customerStep = steps.find((step) => step.type === CheckoutStepType.Customer);
+    const shippingStep = steps.find((step) => step.type === CheckoutStepType.Shipping);
+    const billingStep = steps.find((step) => step.type === CheckoutStepType.Billing);
+    const paymentStep = steps.find((step) => step.type === CheckoutStepType.Payment);
+    const isCustomerComplete = customerStep?.isComplete ?? Boolean(contactEmail);
+    const isShippingComplete = shippingStep?.isComplete ?? Boolean(
+        consignments?.some((consignment) => consignment.selectedShippingOption),
+    );
+    const isBillingComplete =
+        billingStep?.isComplete ??
+        Boolean(billingAddress && getCatalystAddressSummary(billingAddress) !== 'Saved in Catalyst');
+    const isPaymentComplete = paymentStep?.isComplete ?? false;
     const shippingAddress = consignments?.[0]?.shippingAddress;
     const contactEditUrl = resolveCatalystCheckoutEditUrl('customer');
     const deliveryEditUrl = resolveCatalystCheckoutEditUrl('shipping');
@@ -175,18 +189,56 @@ const CatalystPaymentReview = ({
 
             <div className="catalyst-payment-review-panel">
                 <div className="catalyst-payment-progress" aria-label="Checkout progress">
-                    <span className="catalyst-payment-progress-step is-complete">Contact</span>
-                    <span className="catalyst-payment-progress-line is-complete" />
-                    <span className="catalyst-payment-progress-step is-complete">Delivery</span>
-                    <span className="catalyst-payment-progress-line" />
-                    <span className="catalyst-payment-progress-step is-current">Payment</span>
+                    <span
+                        className={classNames('catalyst-payment-progress-step', {
+                            'is-complete': isCustomerComplete,
+                            'is-current': !isCustomerComplete,
+                        })}
+                        data-step="1"
+                    >
+                        Contact
+                    </span>
+                    <span
+                        className={classNames('catalyst-payment-progress-line', {
+                            'is-complete': isCustomerComplete && isShippingComplete,
+                        })}
+                    />
+                    <span
+                        className={classNames('catalyst-payment-progress-step', {
+                            'is-complete': isShippingComplete && isBillingComplete,
+                            'is-current': !isShippingComplete || !isBillingComplete,
+                        })}
+                        data-step="2"
+                    >
+                        Delivery
+                    </span>
+                    <span
+                        className={classNames('catalyst-payment-progress-line', {
+                            'is-complete': isPaymentComplete,
+                        })}
+                    />
+                    <span
+                        className={classNames('catalyst-payment-progress-step', {
+                            'is-complete': isPaymentComplete,
+                            'is-current': !isPaymentComplete,
+                        })}
+                        data-step="3"
+                    >
+                        Payment
+                    </span>
                 </div>
 
                 <div className="catalyst-payment-review-grid">
                     <section className="catalyst-payment-review-cell">
                         <div className="catalyst-payment-review-cellHeader">
                             <span>Contact</span>
-                            <span className="catalyst-payment-review-badge is-complete">Completed</span>
+                            <span
+                                className={classNames('catalyst-payment-review-badge', {
+                                    'is-complete': isCustomerComplete,
+                                })}
+                            >
+                                {isCustomerComplete ? 'Completed' : 'Pending'}
+                            </span>
                         </div>
                         <p>{contactEmail || 'Contact saved'}</p>
                         {renderEditLink(contactEditUrl, 'Edit')}
@@ -195,7 +247,13 @@ const CatalystPaymentReview = ({
                     <section className="catalyst-payment-review-cell">
                         <div className="catalyst-payment-review-cellHeader">
                             <span>Delivery</span>
-                            <span className="catalyst-payment-review-badge is-complete">Completed</span>
+                            <span
+                                className={classNames('catalyst-payment-review-badge', {
+                                    'is-complete': isShippingComplete,
+                                })}
+                            >
+                                {isShippingComplete ? 'Completed' : 'Pending'}
+                            </span>
                         </div>
                         <p>
                             {getCatalystAddressSummary(shippingAddress)}
@@ -207,7 +265,13 @@ const CatalystPaymentReview = ({
                     <section className="catalyst-payment-review-cell">
                         <div className="catalyst-payment-review-cellHeader">
                             <span>Billing</span>
-                            <span className="catalyst-payment-review-badge is-complete">Completed</span>
+                            <span
+                                className={classNames('catalyst-payment-review-badge', {
+                                    'is-complete': isBillingComplete,
+                                })}
+                            >
+                                {isBillingComplete ? 'Completed' : 'Pending'}
+                            </span>
                         </div>
                         <p>{getCatalystAddressSummary(billingAddress)}</p>
                         {renderEditLink(billingEditUrl, 'Edit')}
@@ -216,9 +280,19 @@ const CatalystPaymentReview = ({
                     <section className="catalyst-payment-review-cell">
                         <div className="catalyst-payment-review-cellHeader">
                             <span>Payment</span>
-                            <span className="catalyst-payment-review-badge">Pending</span>
+                            <span
+                                className={classNames('catalyst-payment-review-badge', {
+                                    'is-complete': isPaymentComplete,
+                                })}
+                            >
+                                {isPaymentComplete ? 'Completed' : 'Pending'}
+                            </span>
                         </div>
-                        <p>Secure payment unlocks once delivery and billing are ready.</p>
+                        <p>
+                            {isPaymentComplete
+                                ? 'Payment details are confirmed.'
+                                : 'Enter payment details to place your order.'}
+                        </p>
                     </section>
                 </div>
             </div>
@@ -711,6 +785,69 @@ const Checkout = ({
         checkoutBillingAddress?.email || currentBillingAddress?.email || customer?.email || undefined;
 
     useEffect(() => {
+        if (!isCatalystPaymentOnlyMode || typeof MutationObserver === 'undefined') {
+            return;
+        }
+
+        const hideFloatingStripeBranding = (root: ParentNode = document) => {
+            root.querySelectorAll<HTMLElement | HTMLIFrameElement>('iframe, div, a, span').forEach((node) => {
+                if (!(node instanceof HTMLElement)) {
+                    return;
+                }
+
+                const style = window.getComputedStyle(node);
+                const rect = node.getBoundingClientRect();
+                const text = (node.textContent || '').trim().toLowerCase();
+                const className = `${node.className || ''}`.toLowerCase();
+                const id = (node.id || '').toLowerCase();
+                const isFixed = style.position === 'fixed';
+                const isNearBottomRight =
+                    rect.width > 0 &&
+                    rect.height > 0 &&
+                    rect.bottom >= window.innerHeight - 24 &&
+                    rect.right >= window.innerWidth - 24;
+                const isStripeIframe =
+                    node instanceof HTMLIFrameElement &&
+                    ((node.src || '').includes('stripe') || (node.name || '').includes('stripe'));
+                const isStripeBranding =
+                    text === 'stripe >' ||
+                    text === 'stripe>' ||
+                    text.includes('powered by stripe') ||
+                    className.includes('stripe') ||
+                    id.includes('stripe');
+
+                if (isFixed && isNearBottomRight && (isStripeIframe || isStripeBranding)) {
+                    node.style.display = 'none';
+                }
+            });
+        };
+
+        const handleWindowResize = () => {
+            hideFloatingStripeBranding();
+        };
+
+        hideFloatingStripeBranding();
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(({ addedNodes }) => {
+                addedNodes.forEach((node) => {
+                    if (node instanceof Element) {
+                        hideFloatingStripeBranding(node);
+                    }
+                });
+            });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+        window.addEventListener('resize', handleWindowResize);
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', handleWindowResize);
+        };
+    }, [isCatalystPaymentOnlyMode]);
+
+    useEffect(() => {
         const unsubscribeFromConsignments = subscribeToConsignments(
             handleConsignmentsUpdatedRef.current,
         );
@@ -891,6 +1028,7 @@ const Checkout = ({
                                 billingAddress={billingAddress}
                                 consignments={consignments}
                                 contactEmail={contactEmail}
+                                steps={stepsRef.current}
                             />
                         )}
 
