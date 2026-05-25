@@ -23,7 +23,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "rm -rf dist/",
+          "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
           "PRERELEASE=prerelease webpack --mode production"
         ],
         "parallel": false
@@ -81,7 +81,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "rm -rf packages/core/src/app/generated",
+          "node -e \"require('fs').rmSync('packages/core/src/app/generated',{recursive:true,force:true})\"",
           "npx nx generate @bigcommerce/checkout/workspace-tools:auto-export --projectName=core",
           "npx nx generate @bigcommerce/checkout/workspace-tools:polyfill-generator --projectName=core"
         ],

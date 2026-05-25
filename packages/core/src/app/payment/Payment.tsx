@@ -39,7 +39,9 @@ import { ChecklistSkeleton } from '@bigcommerce/checkout/ui';
 
 import { withAnalytics } from '../analytics';
 import {
+    type CatalystPaymentSelection,
     resolveCatalystCartEditUrl,
+    resolveCatalystPaymentSelection,
     shouldUseCatalystPaymentOnlyMode,
 } from '../checkout/catalystCheckoutBridge';
 import { withCheckout } from '../checkout';
@@ -69,6 +71,7 @@ interface PaymentMethodSelectionParams {
     checkout: Checkout;
     methods: PaymentMethod[];
     consignments?: Consignment[];
+    catalystPaymentSelection?: CatalystPaymentSelection | null;
     getPaymentMethod: (methodId: string, gatewayId?: string) => PaymentMethod | undefined;
     isCatalystPaymentOnlyMode?: boolean;
     preferredPaymentMethodId?: string;
@@ -79,12 +82,109 @@ function getPaymentMethodUniqueKey(method: PaymentMethod): string {
     return [method.id, method.gateway || '', method.method || ''].join('::');
 }
 
+function normalizePaymentToken(value?: string | null): string {
+    return (value || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function getPaymentMethodMatchTokens(method: PaymentMethod): string[] {
+    return compact([
+        method.id,
+        method.gateway,
+        method.method,
+        method.config?.displayName,
+        getUniquePaymentMethodId(method.id, method.gateway),
+        method.gateway ? `${method.gateway}.${method.id}` : undefined,
+    ])
+        .map((value) => normalizePaymentToken(value))
+        .filter(Boolean);
+}
+
+function isPaymentTokenMatch(left?: string | null, right?: string | null): boolean {
+    const normalizedLeft = normalizePaymentToken(left);
+    const normalizedRight = normalizePaymentToken(right);
+
+    return Boolean(normalizedLeft && normalizedRight && normalizedLeft === normalizedRight);
+}
+
 function isCreditCardMethod(method: PaymentMethod): boolean {
+    const tokens = getPaymentMethodMatchTokens(method);
+
     return (
         method.method === PaymentMethodType.CreditCard ||
         method.id === 'card' ||
+        method.id === 'bigpaypay' ||
+        method.id === 'credit_card' ||
+        method.gateway === 'bigpaypay' ||
         method.id === PaymentMethodId.BigCommercePaymentsCreditCards ||
-        method.id === PaymentMethodId.PaypalCommerceCreditCards
+        method.id === PaymentMethodId.PaypalCommerceCreditCards ||
+        tokens.some(
+            (token) =>
+                token === 'card' ||
+                token === 'creditcard' ||
+                token === 'creditcards' ||
+                token.endsWith('card') ||
+                token.endsWith('cards'),
+        )
+    );
+}
+
+function isCatalystPaymentTypeMatch(method: PaymentMethod, methodType?: string): boolean {
+    const normalizedMethodType = normalizePaymentToken(methodType);
+
+    if (!normalizedMethodType) {
+        return true;
+    }
+
+    if (['card', 'cards', 'creditcard', 'creditcards'].includes(normalizedMethodType)) {
+        return isCreditCardMethod(method);
+    }
+
+    const aliases: { [key: string]: string[] } = {
+        ach: ['ach'],
+        amazonpay: ['amazonpay', 'amazon'],
+        applepay: ['applepay', 'apple'],
+        bank: ['bank', 'ach'],
+        bankdeposit: ['bankdeposit', 'bank'],
+        bnpl: ['paylater', 'afterpay', 'clearpay', 'klarna', 'affirm'],
+        cash: ['cash', 'cashondelivery'],
+        cashondelivery: ['cashondelivery', 'cash'],
+        check: ['check'],
+        googlepay: ['googlepay', 'gpay'],
+        manual: ['manual', 'offline'],
+        paypal: ['paypal'],
+        venmo: ['venmo'],
+        wallet: ['wallet', 'googlepay', 'gpay', 'applepay', 'amazonpay', 'venmo'],
+    };
+    const tokens = getPaymentMethodMatchTokens(method);
+    const acceptableTokens = aliases[normalizedMethodType] || [normalizedMethodType];
+
+    return tokens.some((token) =>
+        acceptableTokens.some(
+            (acceptableToken) =>
+                isPaymentTokenMatch(token, acceptableToken) || token.includes(acceptableToken),
+        ),
+    );
+}
+
+function isCatalystPaymentMethodExactMatch(
+    method: PaymentMethod,
+    selection: CatalystPaymentSelection,
+): boolean {
+    const tokens = getPaymentMethodMatchTokens(method);
+    const methodId = normalizePaymentToken(selection.methodId);
+    const gatewayId = normalizePaymentToken(selection.gatewayId);
+    const methodMatches = !methodId || tokens.some((token) => isPaymentTokenMatch(token, methodId));
+    const gatewayMatches =
+        !gatewayId || tokens.some((token) => isPaymentTokenMatch(token, gatewayId));
+
+    if (!methodId && !gatewayId) {
+        return false;
+    }
+
+    return (
+        methodMatches &&
+        gatewayMatches &&
+        isCatalystPaymentTypeMatch(method, selection.methodType)
     );
 }
 
@@ -127,7 +227,37 @@ function dedupePaymentMethods(
     );
 }
 
+function filterCatalystPaymentMethods(
+    methods: PaymentMethod[],
+    selection: CatalystPaymentSelection | null | undefined,
+    preferredPaymentMethodId?: string,
+): PaymentMethod[] {
+    if (!selection) {
+        return methods;
+    }
+
+    const exactMatches =
+        selection.methodId || selection.gatewayId
+            ? methods.filter((method) => isCatalystPaymentMethodExactMatch(method, selection))
+            : [];
+    const typeMatches = selection.methodType
+        ? methods.filter((method) => isCatalystPaymentTypeMatch(method, selection.methodType))
+        : [];
+    const selectedMethods = exactMatches.length
+        ? exactMatches
+        : typeMatches.length
+          ? typeMatches
+          : methods;
+
+    return dedupePaymentMethods(selectedMethods, {
+        isCatalystPaymentOnlyMode: true,
+        preferredPaymentMethodId:
+            selection.gatewayId || selection.methodId || preferredPaymentMethodId,
+    });
+}
+
 const getDefaultPaymentMethod = ({
+    catalystPaymentSelection,
     checkout,
     consignments,
     getPaymentMethod,
@@ -162,6 +292,14 @@ const getDefaultPaymentMethod = ({
 
         filteredMethods = filteredMethods.filter(
             (method: PaymentMethod) => !multiShippingIncompatibleMethodIds.includes(method.id),
+        );
+    }
+
+    if (isCatalystPaymentOnlyMode) {
+        filteredMethods = filterCatalystPaymentMethods(
+            filteredMethods,
+            catalystPaymentSelection,
+            preferredPaymentMethodId,
         );
     }
 
@@ -619,9 +757,10 @@ const Payment= (props: PaymentProps & WithCheckoutPaymentProps & WithLanguagePro
                         const config = updatedState.data.getConfig();
 
             const defaultMethod = checkout
-                ? getDefaultPaymentMethod({
+                  ? getDefaultPaymentMethod({
                       checkout,
                       consignments: updatedState.data.getConsignments(),
+                      catalystPaymentSelection: resolveCatalystPaymentSelection(),
                       getPaymentMethod: updatedState.data.getPaymentMethod,
                                             isCatalystPaymentOnlyMode: shouldUseCatalystPaymentOnlyMode(),
                       methods,
@@ -833,6 +972,7 @@ export function mapToPaymentProps({
     const { defaultMethod, filteredMethods } = getDefaultPaymentMethod({
         checkout,
         consignments,
+        catalystPaymentSelection: resolveCatalystPaymentSelection(),
         getPaymentMethod,
         isCatalystPaymentOnlyMode: shouldUseCatalystPaymentOnlyMode(),
         methods,

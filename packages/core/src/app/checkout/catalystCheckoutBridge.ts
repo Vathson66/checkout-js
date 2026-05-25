@@ -1,5 +1,11 @@
 const CATALYST_PAYMENT_ONLY_PARAM = 'catalyst_payment_only';
 const CATALYST_PAYMENT_ONLY_SESSION_KEY = 'catalyst_payment_only';
+const CATALYST_PAYMENT_METHOD_ID_PARAM = 'catalyst_payment_method_id';
+const CATALYST_PAYMENT_METHOD_ID_SESSION_KEY = 'catalyst_payment_method_id';
+const CATALYST_PAYMENT_GATEWAY_ID_PARAM = 'catalyst_payment_gateway_id';
+const CATALYST_PAYMENT_GATEWAY_ID_SESSION_KEY = 'catalyst_payment_gateway_id';
+const CATALYST_PAYMENT_METHOD_TYPE_PARAM = 'catalyst_payment_method_type';
+const CATALYST_PAYMENT_METHOD_TYPE_SESSION_KEY = 'catalyst_payment_method_type';
 const CATALYST_RETURN_URL_PARAM = 'catalyst_return_url';
 const CATALYST_RETURN_URL_SESSION_KEY = 'catalyst_checkout_return_url';
 const CATALYST_CHECKOUT_URL_PARAM = 'catalyst_checkout_url';
@@ -7,6 +13,12 @@ const CATALYST_CHECKOUT_URL_SESSION_KEY = 'catalyst_checkout_url';
 const CATALYST_CART_URL_PARAM = 'catalyst_cart_url';
 const CATALYST_CART_URL_SESSION_KEY = 'catalyst_cart_url';
 const CATALYST_EDIT_SOURCE = 'hosted-checkout-edit';
+
+export interface CatalystPaymentSelection {
+    gatewayId?: string;
+    methodId?: string;
+    methodType?: string;
+}
 
 function parseBooleanLike(value: string | null): boolean | null {
     if (value === null) {
@@ -120,6 +132,12 @@ function cacheCatalystBridgeUrls(): void {
     readQueryValueWithSession(CATALYST_RETURN_URL_PARAM, CATALYST_RETURN_URL_SESSION_KEY);
     readQueryValueWithSession(CATALYST_CHECKOUT_URL_PARAM, CATALYST_CHECKOUT_URL_SESSION_KEY);
     readQueryValueWithSession(CATALYST_CART_URL_PARAM, CATALYST_CART_URL_SESSION_KEY);
+    readQueryValueWithSession(CATALYST_PAYMENT_METHOD_ID_PARAM, CATALYST_PAYMENT_METHOD_ID_SESSION_KEY);
+    readQueryValueWithSession(CATALYST_PAYMENT_GATEWAY_ID_PARAM, CATALYST_PAYMENT_GATEWAY_ID_SESSION_KEY);
+    readQueryValueWithSession(
+        CATALYST_PAYMENT_METHOD_TYPE_PARAM,
+        CATALYST_PAYMENT_METHOD_TYPE_SESSION_KEY,
+    );
 }
 
 export function shouldUseCatalystPaymentOnlyMode(): boolean {
@@ -146,6 +164,31 @@ export function shouldUseCatalystPaymentOnlyMode(): boolean {
     } catch {
         return false;
     }
+}
+
+export function resolveCatalystPaymentSelection(): CatalystPaymentSelection | null {
+    const methodId = readQueryValueWithSession(
+        CATALYST_PAYMENT_METHOD_ID_PARAM,
+        CATALYST_PAYMENT_METHOD_ID_SESSION_KEY,
+    );
+    const gatewayId = readQueryValueWithSession(
+        CATALYST_PAYMENT_GATEWAY_ID_PARAM,
+        CATALYST_PAYMENT_GATEWAY_ID_SESSION_KEY,
+    );
+    const methodType = readQueryValueWithSession(
+        CATALYST_PAYMENT_METHOD_TYPE_PARAM,
+        CATALYST_PAYMENT_METHOD_TYPE_SESSION_KEY,
+    );
+
+    if (!methodId && !gatewayId && !methodType) {
+        return null;
+    }
+
+    return {
+        gatewayId: gatewayId || undefined,
+        methodId: methodId || undefined,
+        methodType: methodType || undefined,
+    };
 }
 
 export function resolveCatalystCheckoutEditUrl(editTarget?: string): string | null {
