@@ -3,6 +3,52 @@
     color: #111827;
     min-height: 100vh;
 
+    .catalyst-checkout-shell-header {
+        background: #ffffff;
+        border-bottom: 1px solid #e5eaf0;
+        margin-bottom: spacing("single");
+    }
+
+    .catalyst-checkout-shell-headerInner {
+        align-items: center;
+        display: flex;
+        gap: spacing("single");
+        justify-content: space-between;
+        margin: 0 auto;
+        max-width: remCalc(980px);
+        min-height: remCalc(72px);
+        padding: 0 spacing("single");
+    }
+
+    .catalyst-checkout-shell-brand {
+        color: #111827;
+        font-size: remCalc(18px);
+        font-weight: fontWeight("bold");
+        line-height: 1.1;
+        text-decoration: none;
+    }
+
+    .catalyst-checkout-shell-nav {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: spacing("single");
+        justify-content: flex-end;
+    }
+
+    .catalyst-checkout-shell-link {
+        color: #334155;
+        font-size: remCalc(12px);
+        font-weight: fontWeight("semibold");
+        text-decoration: none;
+    }
+
+    .catalyst-checkout-shell-link:hover,
+    .catalyst-checkout-shell-link:focus {
+        color: #111827;
+        text-decoration: underline;
+    }
+
     .checkoutHeader {
         background: #f6f7f8;
         border-bottom: 0;
@@ -375,6 +421,39 @@
         margin-top: spacing("half");
     }
 
+    .checkout-step--payment .checkout-terms {
+        border-top: 1px solid #eef2f7;
+        margin-top: spacing("single");
+        padding-top: spacing("single");
+    }
+
+    .checkout-step--payment .checkout-terms .form-legend {
+        color: #475569;
+        font-size: remCalc(11px);
+        font-weight: fontWeight("semibold");
+        margin-bottom: spacing("half");
+        text-transform: uppercase;
+    }
+
+    .checkout-step--payment .checkout-terms .form-field {
+        margin-bottom: spacing("half");
+    }
+
+    .checkout-step--payment .checkout-terms .form-input,
+    .checkout-step--payment .checkout-terms .optimizedCheckout-form-input,
+    .checkout-step--payment .checkout-terms textarea {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: remCalc(8px);
+        color: #111827;
+    }
+
+    .checkout-step--payment .checkout-terms .form-label {
+        color: #334155;
+        font-size: remCalc(12px);
+        line-height: 1.45;
+    }
+
     .checkout-step--payment .form-actions .button--primary,
     .checkout-step--payment .form-actions .button--action,
     .checkout-step--payment .form-actions .optimizedCheckout-buttonPrimary {
@@ -568,7 +647,7 @@
         }
 
         .catalyst-payment-review-grid {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 }
@@ -580,6 +659,10 @@
         }
 
         .checkoutHeader-content {
+            max-width: remCalc(1040px);
+        }
+
+        .catalyst-checkout-shell-headerInner {
             max-width: remCalc(1040px);
         }
     }

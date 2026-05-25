@@ -124,6 +124,35 @@ interface CatalystPaymentReviewProps {
     consignments?: Consignment[];
 }
 
+interface CatalystHostedHeaderProps {
+    cartUrl: string;
+    storefrontUrl: string;
+    storeName: string;
+}
+
+const CatalystHostedHeader = ({
+    cartUrl,
+    storefrontUrl,
+    storeName,
+}: CatalystHostedHeaderProps): ReactElement => (
+    <header className="catalyst-checkout-shell-header" data-test="catalyst-checkout-shell-header">
+        <div className="catalyst-checkout-shell-headerInner">
+            <a className="catalyst-checkout-shell-brand" href={storefrontUrl}>
+                {storeName}
+            </a>
+
+            <nav aria-label="Storefront shortcuts" className="catalyst-checkout-shell-nav">
+                <a className="catalyst-checkout-shell-link" href={storefrontUrl}>
+                    Continue shopping
+                </a>
+                <a className="catalyst-checkout-shell-link" href={cartUrl}>
+                    Edit cart
+                </a>
+            </nav>
+        </div>
+    </header>
+);
+
 const CatalystPaymentReview = ({
     billingAddress,
     contactEmail,
@@ -845,6 +874,14 @@ const Checkout = ({
             data-test="checkout-page-container"
             id="checkout-page-container"
         >
+            {isCatalystPaymentOnlyMode && (
+                <CatalystHostedHeader
+                    cartUrl={catalystCartUrl}
+                    storefrontUrl={storefrontUrl}
+                    storeName={checkoutHost}
+                />
+            )}
+
             <div className="layout optimizedCheckout-contentPrimary">
                 {state.isCartEmpty ?
                     <EmptyCartMessage loginUrl={loginUrl} waitInterval={3000} />
