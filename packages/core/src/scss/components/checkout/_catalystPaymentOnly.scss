@@ -1,6 +1,7 @@
 .catalyst-payment-only {
     background: #f6f7f8;
     color: #111827;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     min-height: 100vh;
 
     .catalyst-checkout-shell-header {
@@ -22,7 +23,7 @@
 
     .catalyst-checkout-shell-brand {
         color: #111827;
-        font-size: remCalc(18px);
+        font-size: remCalc(17px);
         font-weight: fontWeight("bold");
         line-height: 1.1;
         text-decoration: none;
@@ -83,7 +84,7 @@
 
     .catalyst-payment-review-heading {
         color: #111827;
-        font-size: remCalc(20px);
+        font-size: remCalc(18px);
         font-weight: fontWeight("semibold");
         line-height: 1.25;
         margin: 0 0 spacing("half");
@@ -272,7 +273,7 @@
 
     .stepHeader-title {
         color: #111827;
-        font-size: remCalc(20px);
+        font-size: remCalc(18px);
         font-weight: fontWeight("semibold");
         line-height: 1.25;
         margin: 0;
@@ -618,6 +619,39 @@
         font-size: remCalc(16px);
         font-weight: fontWeight("bold");
     }
+
+    .catalyst-checkout-footer {
+        align-items: center;
+        border-top: 1px solid #e5eaf0;
+        color: #475569;
+        display: flex;
+        flex-direction: column;
+        gap: spacing("half");
+        margin: 0 auto;
+        max-width: remCalc(980px);
+        padding: spacing("single") spacing("single") spacing("double");
+        width: 100%;
+    }
+
+    .catalyst-checkout-footer-link {
+        color: #334155;
+        font-size: remCalc(12px);
+        font-weight: fontWeight("semibold");
+        text-decoration: none;
+    }
+
+    .catalyst-checkout-footer-link:hover,
+    .catalyst-checkout-footer-link:focus {
+        color: #111827;
+        text-decoration: underline;
+    }
+
+    .catalyst-checkout-footer-copy {
+        color: #64748b;
+        font-size: remCalc(11px);
+        line-height: 1.4;
+        text-align: center;
+    }
 }
 
 @include breakpoint("medium") {
@@ -649,6 +683,11 @@
         .catalyst-payment-review-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
+
+        .catalyst-checkout-footer {
+            flex-direction: row;
+            justify-content: space-between;
+        }
     }
 }
 
@@ -663,6 +702,10 @@
         }
 
         .catalyst-checkout-shell-headerInner {
+            max-width: remCalc(1040px);
+        }
+
+        .catalyst-checkout-footer {
             max-width: remCalc(1040px);
         }
     }
