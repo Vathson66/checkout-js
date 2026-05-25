@@ -30,6 +30,7 @@ import { OrderConfirmationPageSkeleton } from '@bigcommerce/checkout/ui';
 import { navigateToOrderConfirmation as navigateToOrderConfirmationUtility } from '@bigcommerce/checkout/utility';
 
 import { withAnalytics } from '../analytics';
+import { getAddressContent } from '../address/SingleLineStaticAddress';
 import { EmptyCartMessage } from '../cart';
 import { withCheckout } from '../checkout';
 import { CustomError, ErrorModal, isCustomError, isErrorWithType } from '../common/error';
@@ -95,6 +96,106 @@ function shouldRenderCatalystSingleStepPayment(
         .filter((step) => step.type !== CheckoutStepType.Payment && step.isRequired)
         .every((step) => step.isComplete);
 }
+
+function getCatalystAddressSummary(address?: Address): string {
+    if (!address) {
+        return 'Saved in Catalyst';
+    }
+
+    return (
+        getAddressContent(address) ||
+        [address.address1, address.city, address.stateOrProvince, address.postalCode]
+            .filter(Boolean)
+            .join(', ') ||
+        'Saved in Catalyst'
+    );
+}
+
+function getCatalystShippingSummary(consignments?: Consignment[]): string {
+    const selectedConsignment = consignments?.find((consignment) => consignment.selectedShippingOption);
+    const selectedShippingOption = selectedConsignment?.selectedShippingOption;
+
+    return selectedShippingOption?.description || selectedShippingOption?.id || 'Delivery selected';
+}
+
+interface CatalystPaymentReviewProps {
+    billingAddress?: Address;
+    contactEmail?: string;
+    consignments?: Consignment[];
+}
+
+const CatalystPaymentReview = ({
+    billingAddress,
+    contactEmail,
+    consignments,
+}: CatalystPaymentReviewProps): ReactElement => {
+    const shippingAddress = consignments?.[0]?.shippingAddress;
+    const contactEditUrl = resolveCatalystCheckoutEditUrl('customer');
+    const deliveryEditUrl = resolveCatalystCheckoutEditUrl('shipping');
+    const billingEditUrl = resolveCatalystCheckoutEditUrl('billing');
+    const renderEditLink = (url: string | null, label: string) =>
+        url ? (
+            <a className="catalyst-payment-review-edit" href={url}>
+                {label}
+            </a>
+        ) : null;
+
+    return (
+        <section className="catalyst-payment-review" data-test="catalyst-payment-review">
+            <h1 className="catalyst-payment-review-heading">Delivery & billing</h1>
+
+            <div className="catalyst-payment-review-panel">
+                <div className="catalyst-payment-progress" aria-label="Checkout progress">
+                    <span className="catalyst-payment-progress-step is-complete">Contact</span>
+                    <span className="catalyst-payment-progress-line is-complete" />
+                    <span className="catalyst-payment-progress-step is-complete">Delivery</span>
+                    <span className="catalyst-payment-progress-line" />
+                    <span className="catalyst-payment-progress-step is-current">Payment</span>
+                </div>
+
+                <div className="catalyst-payment-review-grid">
+                    <section className="catalyst-payment-review-cell">
+                        <div className="catalyst-payment-review-cellHeader">
+                            <span>Contact</span>
+                            <span className="catalyst-payment-review-badge is-complete">Completed</span>
+                        </div>
+                        <p>{contactEmail || 'Contact saved'}</p>
+                        {renderEditLink(contactEditUrl, 'Edit')}
+                    </section>
+
+                    <section className="catalyst-payment-review-cell">
+                        <div className="catalyst-payment-review-cellHeader">
+                            <span>Delivery</span>
+                            <span className="catalyst-payment-review-badge is-complete">Completed</span>
+                        </div>
+                        <p>
+                            {getCatalystAddressSummary(shippingAddress)}
+                            <span>{getCatalystShippingSummary(consignments)}</span>
+                        </p>
+                        {renderEditLink(deliveryEditUrl, 'Edit')}
+                    </section>
+
+                    <section className="catalyst-payment-review-cell">
+                        <div className="catalyst-payment-review-cellHeader">
+                            <span>Billing</span>
+                            <span className="catalyst-payment-review-badge is-complete">Completed</span>
+                        </div>
+                        <p>{getCatalystAddressSummary(billingAddress)}</p>
+                        {renderEditLink(billingEditUrl, 'Edit')}
+                    </section>
+
+                    <section className="catalyst-payment-review-cell">
+                        <div className="catalyst-payment-review-cellHeader">
+                            <span>Payment</span>
+                            <span className="catalyst-payment-review-badge">Pending</span>
+                        </div>
+                        <p>Secure payment unlocks once delivery and billing are ready.</p>
+                    </section>
+                </div>
+            </div>
+        </section>
+    );
+};
 
 export interface CheckoutProps {
     checkoutId: string;
@@ -573,6 +674,12 @@ const Checkout = ({
     const storefrontUrl = resolveCatalystStorefrontUrl(data.getConfig()?.links?.siteLink || '/');
     const catalystCartUrl = resolveCatalystCartEditUrl() || cartUrl;
     const checkoutHost = data.getConfig()?.storeProfile?.storeName || 'store';
+    const checkout = data.getCheckout();
+    const customer = data.getCustomer();
+    const checkoutBillingAddress = checkout?.billingAddress as (Address & { email?: string }) | undefined;
+    const currentBillingAddress = billingAddress as (Address & { email?: string }) | undefined;
+    const contactEmail =
+        checkoutBillingAddress?.email || currentBillingAddress?.email || customer?.email || undefined;
 
     useEffect(() => {
         const unsubscribeFromConsignments = subscribeToConsignments(
@@ -742,17 +849,15 @@ const Checkout = ({
                 {state.isCartEmpty ?
                     <EmptyCartMessage loginUrl={loginUrl} waitInterval={3000} />
                     :<>
-                        <div className="layout-main">
-                            {shouldUseCatalystSingleStepPayment && (
-                                <div className="catalyst-flow-banner" data-test="catalyst-flow-banner">
-                                    <strong>Step 3 of 3</strong>
-                                    <span>
-                                        Customer, shipping, and billing details are already saved.
-                                        Complete secure payment to place your order.
-                                    </span>
-                                </div>
-                            )}
+                        {shouldUseCatalystSingleStepPayment && (
+                            <CatalystPaymentReview
+                                billingAddress={billingAddress}
+                                consignments={consignments}
+                                contactEmail={contactEmail}
+                            />
+                        )}
 
+                        <div className="layout-main">
                             <CheckoutHeader
                                 activeStepType={state.activeStepType}
                                 buttonConfigs={state.buttonConfigs}

@@ -80,3 +80,7 @@
 // =============================================================================
 
 @import "themeV2/themeV2";
+
+// Catalyst hosted payment handoff overrides are loaded last so the scoped
+// payment-only shell can match Catalyst without changing standard checkout.
+@import "components/checkout/catalystPaymentOnly";
