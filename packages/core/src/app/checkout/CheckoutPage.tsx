@@ -922,19 +922,6 @@ const Checkout = ({
                 <CartSummary isMultiShippingMode={state.isMultiShippingMode} />
             </div>
 
-            {isCatalystPaymentOnlyMode && (
-                <footer className="catalyst-checkout-footer" data-test="catalyst-checkout-footer">
-                    <a className="catalyst-checkout-footer-link" href={storefrontUrl}>
-                        Continue shopping
-                    </a>
-                    <a className="catalyst-checkout-footer-link" href={catalystCartUrl}>
-                        Edit cart
-                    </a>
-                    <span className="catalyst-checkout-footer-copy">
-                        Secure checkout for {checkoutHost}
-                    </span>
-                </footer>
-            )}
             {errorModal}
         </div>
     );
