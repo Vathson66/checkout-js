@@ -254,6 +254,22 @@ function readCachedBridgeState(): CatalystCheckoutBridgeState | null {
     }
 }
 
+function setSessionStorageValue(key: string, value?: string): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+        if (isString(value)) {
+            window.sessionStorage.setItem(key, value.trim());
+        } else {
+            window.sessionStorage.removeItem(key);
+        }
+    } catch {
+        // Ignore session cache failures and continue with in-memory state.
+    }
+}
+
 function cacheBridgeState(state: CatalystCheckoutBridgeState): CatalystCheckoutBridgeState {
     if (typeof window !== 'undefined') {
         try {
@@ -264,40 +280,25 @@ function cacheBridgeState(state: CatalystCheckoutBridgeState): CatalystCheckoutB
 
             if (state.paymentOnly) {
                 window.sessionStorage.setItem(CATALYST_PAYMENT_ONLY_SESSION_KEY, '1');
+            } else {
+                window.sessionStorage.removeItem(CATALYST_PAYMENT_ONLY_SESSION_KEY);
             }
 
-            if (state.returnUrl) {
-                window.sessionStorage.setItem(CATALYST_RETURN_URL_SESSION_KEY, state.returnUrl);
-            }
-
-            if (state.checkoutUrl) {
-                window.sessionStorage.setItem(CATALYST_CHECKOUT_URL_SESSION_KEY, state.checkoutUrl);
-            }
-
-            if (state.cartUrl) {
-                window.sessionStorage.setItem(CATALYST_CART_URL_SESSION_KEY, state.cartUrl);
-            }
-
-            if (state.paymentSelection?.methodId) {
-                window.sessionStorage.setItem(
-                    CATALYST_PAYMENT_METHOD_ID_SESSION_KEY,
-                    state.paymentSelection.methodId,
-                );
-            }
-
-            if (state.paymentSelection?.gatewayId) {
-                window.sessionStorage.setItem(
-                    CATALYST_PAYMENT_GATEWAY_ID_SESSION_KEY,
-                    state.paymentSelection.gatewayId,
-                );
-            }
-
-            if (state.paymentSelection?.methodType) {
-                window.sessionStorage.setItem(
-                    CATALYST_PAYMENT_METHOD_TYPE_SESSION_KEY,
-                    state.paymentSelection.methodType,
-                );
-            }
+            setSessionStorageValue(CATALYST_RETURN_URL_SESSION_KEY, state.returnUrl);
+            setSessionStorageValue(CATALYST_CHECKOUT_URL_SESSION_KEY, state.checkoutUrl);
+            setSessionStorageValue(CATALYST_CART_URL_SESSION_KEY, state.cartUrl);
+            setSessionStorageValue(
+                CATALYST_PAYMENT_METHOD_ID_SESSION_KEY,
+                state.paymentSelection?.methodId,
+            );
+            setSessionStorageValue(
+                CATALYST_PAYMENT_GATEWAY_ID_SESSION_KEY,
+                state.paymentSelection?.gatewayId,
+            );
+            setSessionStorageValue(
+                CATALYST_PAYMENT_METHOD_TYPE_SESSION_KEY,
+                state.paymentSelection?.methodType,
+            );
         } catch {
             // Ignore session cache failures and continue with in-memory state.
         }
