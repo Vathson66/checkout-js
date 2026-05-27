@@ -12,8 +12,16 @@ import { TranslatedString } from '@bigcommerce/checkout/locale';
 import { LazyContainer } from '@bigcommerce/checkout/ui';
 
 import { withCheckout } from '../checkout';
+import {
+    resolveCatalystPaymentSelection,
+    shouldUseCatalystPaymentOnlyMode,
+} from '../checkout/catalystCheckoutBridge';
 
-import { getSupportedMethodIds } from './getSupportedMethods';
+import {
+    getCatalystExpressMethodIds,
+    getSupportedMethodIds,
+    isCatalystExpressMethodType,
+} from './getSupportedMethods';
 import resolveCheckoutButton from './resolveCheckoutButton';
 
 const CheckoutButtonV1Resolver = lazy(() => import(/* webpackChunkName: "wallet-button-v1-resolver" */'./WalletButtonV1Resolver'));
@@ -47,7 +55,13 @@ const CheckoutButtonList: FunctionComponent<WithCheckoutCheckoutButtonListProps 
     onError,
 }) => {
     const { language } = useLocale();
-    const supportedMethodIds = getSupportedMethodIds(methodIds);
+    const catalystPaymentSelection = resolveCatalystPaymentSelection();
+    const isCatalystExpressMode =
+        !shouldUseCatalystPaymentOnlyMode() &&
+        isCatalystExpressMethodType(catalystPaymentSelection?.methodType);
+    const supportedMethodIds = isCatalystExpressMode
+        ? getCatalystExpressMethodIds(methodIds, catalystPaymentSelection?.methodType)
+        : getSupportedMethodIds(methodIds);
 
     if (supportedMethodIds.length === 0) {
         return null;

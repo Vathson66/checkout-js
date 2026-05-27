@@ -6,8 +6,16 @@ import { TranslatedString } from '@bigcommerce/checkout/locale';
 import { WalletButtonsContainerSkeleton } from '@bigcommerce/checkout/ui';
 
 import { withCheckout } from '../checkout';
+import {
+    resolveCatalystPaymentSelection,
+    shouldUseCatalystPaymentOnlyMode,
+} from '../checkout/catalystCheckoutBridge';
 
-import { getSupportedMethodIds } from './getSupportedMethods';
+import {
+    getCatalystExpressMethodIds,
+    getSupportedMethodIds,
+    isCatalystExpressMethodType,
+} from './getSupportedMethods';
 import resolveCheckoutButton from './resolveCheckoutButton';
 
 const CheckoutButtonV1Resolver = lazy(() => import(/* webpackChunkName: "wallet-button-v1-resolver" */'./WalletButtonV1Resolver'));
@@ -131,8 +139,13 @@ function mapToCheckoutButtonContainerProps({
      } = checkoutState;
     const config = getConfig();
     const providers = config?.checkoutSettings.remoteCheckoutProviders ?? [];
-
-    const availableMethodIds = getSupportedMethodIds(providers);
+    const catalystPaymentSelection = resolveCatalystPaymentSelection();
+    const isCatalystExpressMode =
+        !shouldUseCatalystPaymentOnlyMode() &&
+        isCatalystExpressMethodType(catalystPaymentSelection?.methodType);
+    const availableMethodIds = isCatalystExpressMode
+        ? getCatalystExpressMethodIds(providers, catalystPaymentSelection?.methodType)
+        : getSupportedMethodIds(providers);
     const customer = getCustomer();
 
     if (!isPaymentDataRequired()) {
