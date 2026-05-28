@@ -59,6 +59,12 @@
         min-height: auto;
     }
 
+    .optimizedCheckout-header,
+    .optimizedCheckout-header + .checkoutHeader,
+    .checkoutHeader:empty {
+        display: none;
+    }
+
     .checkoutHeader-content {
         margin: 0 auto;
         max-width: remCalc(1180px);

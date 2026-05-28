@@ -818,6 +818,17 @@ const Checkout = ({
             return null;
         };
 
+        const hideStripeNode = (element: HTMLElement | null) => {
+            if (!element) {
+                return;
+            }
+
+            element.style.setProperty('display', 'none', 'important');
+            element.style.setProperty('visibility', 'hidden', 'important');
+            element.style.setProperty('opacity', '0', 'important');
+            element.style.setProperty('pointer-events', 'none', 'important');
+        };
+
         const hideFloatingStripeBranding = (root: ParentNode = document) => {
             root.querySelectorAll<HTMLElement>('iframe, div, a, span, button').forEach((node) => {
                 if (!(node instanceof Element)) {
@@ -849,7 +860,9 @@ const Checkout = ({
                 const container = getStripeFloatingContainer(node);
 
                 if (container) {
-                    container.style.display = 'none';
+                    hideStripeNode(container);
+                } else {
+                    hideStripeNode(node instanceof HTMLElement ? node : null);
                 }
             });
         };
@@ -1065,14 +1078,16 @@ const Checkout = ({
                         )}
 
                         <div className="layout-main">
-                            <CheckoutHeader
-                                activeStepType={state.activeStepType}
-                                buttonConfigs={state.buttonConfigs}
-                                checkEmbeddedSupport={checkEmbeddedSupport}
-                                defaultStepType={state.defaultStepType}
-                                onUnhandledError={handleUnhandledError}
-                                onWalletButtonClick={handleWalletButtonClick}
-                            />
+                            {!isCatalystPaymentOnlyMode && (
+                                <CheckoutHeader
+                                    activeStepType={state.activeStepType}
+                                    buttonConfigs={state.buttonConfigs}
+                                    checkEmbeddedSupport={checkEmbeddedSupport}
+                                    defaultStepType={state.defaultStepType}
+                                    onUnhandledError={handleUnhandledError}
+                                    onWalletButtonClick={handleWalletButtonClick}
+                                />
+                            )}
 
                             <ol className="checkout-steps">
                                 {visibleSteps
