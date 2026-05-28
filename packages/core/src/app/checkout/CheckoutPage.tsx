@@ -861,8 +861,6 @@ const Checkout = ({
 
                 if (container) {
                     hideStripeNode(container);
-                } else {
-                    hideStripeNode(node instanceof HTMLElement ? node : null);
                 }
             });
         };
@@ -1078,16 +1076,14 @@ const Checkout = ({
                         )}
 
                         <div className="layout-main">
-                            {!isCatalystPaymentOnlyMode && (
-                                <CheckoutHeader
-                                    activeStepType={state.activeStepType}
-                                    buttonConfigs={state.buttonConfigs}
-                                    checkEmbeddedSupport={checkEmbeddedSupport}
-                                    defaultStepType={state.defaultStepType}
-                                    onUnhandledError={handleUnhandledError}
-                                    onWalletButtonClick={handleWalletButtonClick}
-                                />
-                            )}
+                            <CheckoutHeader
+                                activeStepType={state.activeStepType}
+                                buttonConfigs={state.buttonConfigs}
+                                checkEmbeddedSupport={checkEmbeddedSupport}
+                                defaultStepType={state.defaultStepType}
+                                onUnhandledError={handleUnhandledError}
+                                onWalletButtonClick={handleWalletButtonClick}
+                            />
 
                             <ol className="checkout-steps">
                                 {visibleSteps
