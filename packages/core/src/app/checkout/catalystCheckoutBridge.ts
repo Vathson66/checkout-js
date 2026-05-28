@@ -83,6 +83,43 @@ function readQueryValueWithSession(paramName: string, sessionKey: string): strin
     }
 }
 
+function cleanupCatalystBridgeQueryParams(): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+        const url = new URL(window.location.href);
+        let changed = false;
+        const managedParams = [
+            CATALYST_HANDOFF_TOKEN_PARAM,
+            CATALYST_PAYMENT_ONLY_PARAM,
+            CATALYST_PAYMENT_METHOD_ID_PARAM,
+            CATALYST_PAYMENT_GATEWAY_ID_PARAM,
+            CATALYST_PAYMENT_METHOD_TYPE_PARAM,
+            CATALYST_RETURN_URL_PARAM,
+            CATALYST_CHECKOUT_URL_PARAM,
+            CATALYST_CART_URL_PARAM,
+        ];
+
+        managedParams.forEach((paramName) => {
+            if (url.searchParams.has(paramName)) {
+                url.searchParams.delete(paramName);
+                changed = true;
+            }
+        });
+
+        if (!changed) {
+            return;
+        }
+
+        const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+        window.history.replaceState(window.history.state, document.title, nextUrl);
+    } catch {
+        // Ignore history cleanup failures and continue with cached bridge state.
+    }
+}
+
 function toRedirectUrl(url: string): URL | null {
     try {
         return new URL(url);
@@ -325,7 +362,13 @@ function readBridgeStateFromHandoffToken(): CatalystCheckoutBridgeState | null {
 
     const state = normalizeBridgeState(payload);
 
-    return state ? cacheBridgeState(state) : null;
+    if (!state) {
+        return null;
+    }
+
+    cleanupCatalystBridgeQueryParams();
+
+    return cacheBridgeState(state);
 }
 
 function readLegacyBridgeState(): CatalystCheckoutBridgeState | null {
@@ -366,7 +409,7 @@ function readLegacyBridgeState(): CatalystCheckoutBridgeState | null {
         return null;
     }
 
-    return cacheBridgeState({
+    const state = cacheBridgeState({
         paymentOnly: paymentOnly === true,
         returnUrl: returnUrl || undefined,
         checkoutUrl: checkoutUrl || undefined,
@@ -380,6 +423,10 @@ function readLegacyBridgeState(): CatalystCheckoutBridgeState | null {
                 }
                 : undefined,
     });
+
+    cleanupCatalystBridgeQueryParams();
+
+    return state;
 }
 
 function readCatalystBridgeState(): CatalystCheckoutBridgeState | null {
