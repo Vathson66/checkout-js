@@ -524,6 +524,40 @@
         box-shadow: none;
     }
 
+    .checkout-step--payment .form-actions .button--primary.is-loading,
+    .checkout-step--payment .form-actions .button--action.is-loading,
+    .checkout-step--payment .form-actions .optimizedCheckout-buttonPrimary.is-loading,
+    .checkout-step--payment .form-actions .button--primary[disabled].is-loading,
+    .checkout-step--payment .form-actions .button--action[disabled].is-loading,
+    .checkout-step--payment .form-actions .optimizedCheckout-buttonPrimary[disabled].is-loading {
+        animation: none;
+        background: linear-gradient(90deg, #111827 0%, #1f2937 50%, #111827 100%);
+        background-size: 200% 100%;
+        color: #ffffff;
+        cursor: progress;
+        opacity: 1;
+        position: relative;
+    }
+
+    .checkout-step--payment .form-actions .button--primary.is-loading::after,
+    .checkout-step--payment .form-actions .button--action.is-loading::after,
+    .checkout-step--payment .form-actions .optimizedCheckout-buttonPrimary.is-loading::after {
+        animation: catalystPaymentSubmitPulse 1.2s ease-in-out infinite;
+        background: rgba(255, 255, 255, 0.18);
+        border-radius: inherit;
+        content: "";
+        inset: 0;
+        position: absolute;
+    }
+
+    .checkout-step--payment .payment-submit-status {
+        color: #334155;
+        font-size: remCalc(12px);
+        line-height: 1.45;
+        margin: spacing("half") 0 0;
+        text-align: center;
+    }
+
     .layout-cart .cart {
         background: #ffffff;
         border: 1px solid #d8dee9;
@@ -664,6 +698,20 @@
         font-weight: fontWeight("bold");
     }
 
+}
+
+@keyframes catalystPaymentSubmitPulse {
+    0% {
+        opacity: 0.12;
+    }
+
+    50% {
+        opacity: 0.28;
+    }
+
+    100% {
+        opacity: 0.12;
+    }
 }
 
 @include breakpoint("medium") {

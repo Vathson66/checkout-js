@@ -34,6 +34,7 @@ export interface PaymentFormProps {
     didExceedSpamLimit?: boolean;
     isEmbedded?: boolean;
     isInitializingPayment?: boolean;
+    isSubmittingOrder?: boolean;
     isTermsConditionsRequired?: boolean;
     isUsingMultiShipping?: boolean;
     isStoreCreditApplied: boolean;
@@ -61,6 +62,7 @@ const PaymentForm: FunctionComponent<
     didExceedSpamLimit,
     isEmbedded,
     isInitializingPayment,
+    isSubmittingOrder,
     isPaymentDataRequired,
     isTermsConditionsRequired,
     isStoreCreditApplied,
@@ -182,6 +184,17 @@ const PaymentForm: FunctionComponent<
                         }
                         methodType={selectedMethod && selectedMethod.method}
                     />
+                )}
+
+                {isSubmittingOrder && (
+                    <p
+                        aria-live="assertive"
+                        className="payment-submit-status"
+                        data-test="payment-submit-status"
+                        role="status"
+                    >
+                        Placing your order now. Please wait and do not refresh this page.
+                    </p>
                 )}
             </div>
         </Form>

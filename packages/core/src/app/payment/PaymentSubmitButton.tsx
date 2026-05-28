@@ -10,6 +10,7 @@ import { PaymentMethodId, PaymentMethodType } from './paymentMethod';
 import { useThemeContext } from '@bigcommerce/checkout/contexts';
 
 interface PaymentSubmitButtonTextProps {
+    isSubmitting?: boolean;
     methodGateway?: string;
     methodId?: string;
     methodType?: string;
@@ -24,6 +25,7 @@ const providersWithCustomClasses = [PaymentMethodId.Bolt];
 
 const PaymentSubmitButtonText: FunctionComponent<PaymentSubmitButtonTextProps> = memo(
     ({
+        isSubmitting,
         methodId,
         methodName,
         methodType,
@@ -33,6 +35,10 @@ const PaymentSubmitButtonText: FunctionComponent<PaymentSubmitButtonTextProps> =
         isComplete,
         isPaymentDataRequired,
     }) => {
+        if (isSubmitting) {
+            return <>Placing order...</>;
+        }
+
         if (!isPaymentDataRequired) {
             return <TranslatedString id="payment.place_order_action" />;
         }
@@ -177,6 +183,7 @@ const PaymentSubmitButton: FunctionComponent<
                 initialisationStrategyType={initialisationStrategyType}
                 isComplete={isComplete}
                 isPaymentDataRequired={isPaymentDataRequired}
+                isSubmitting={isSubmitting}
                 methodGateway={methodGateway}
                 methodId={methodId}
                 methodName={methodName}
